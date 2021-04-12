@@ -15,7 +15,7 @@ int main( int argc, char *argv[] ){
 	uint16_t puerto;
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
-	int terminar = 0;
+	//int terminar = 0;
 	char buffer[TAM];
 
 	if ( argc < 3 ) {
@@ -42,7 +42,19 @@ int main( int argc, char *argv[] ){
 	}
 
 	while(1) {
-		printf( "Ingrese el mensaje a transmitir: " );
+
+		memset( buffer, '\0', TAM );
+		n = (int) read(sockfd, buffer, TAM);
+		printf("Server msg:%s\n", buffer);
+
+		
+		n = (int) write(sockfd,"client ACK\n", 18);
+
+		if(n == -1){
+			perror("Invalid write.");
+			exit(0);
+		}
+		/*printf( "Ingrese el mensaje a transmitir: " );
 		memset( buffer, '\0', TAM );
 		fgets( buffer, TAM-1, stdin );
 
@@ -65,7 +77,7 @@ int main( int argc, char *argv[] ){
 		if(terminar) {
 			printf("End of execution\n" );
 			exit(0);
-		}
+		}*/
 	}
 	return 0;
 } 
