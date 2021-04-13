@@ -107,7 +107,8 @@ int main( int argc, char *argv[] ) {
 				ctrl_read = (int) read(events_array[i].data.fd, buffer, sizeof(buffer));
 				if(ctrl_read > 0){
 					printf("\nRECV from cli %d = %s\n", events_array[i].data.fd, buffer);
-				}else{
+				}
+				else if(ctrl_read < 0){
 					perror("Error reading");
 					exit(EXIT_FAILURE);
 				}
@@ -118,17 +119,3 @@ int main( int argc, char *argv[] ) {
 
 	return 0; 
 } 
-/*
-int epoll_event_add(int epfd, int fs, int event){
-	struct epoll_event ev;
-	ev.data.fd = fd;
-	ev.events  = event;
-	return epoll_ctl(epfd,EPOLL_CTL_ADD,fd,&ev);
-}
-
-int epoll_event_del(int epfd,int fd,int event){
-	struct epoll_event ev;
-	ev.data.fd = fd;
-	ev.events = event; //EPOLLIN:Data other than high-priority data can be read
-	return epoll_ctl(epfd,EPOLL_CTL_DEL,fd,&ev);
-}*/

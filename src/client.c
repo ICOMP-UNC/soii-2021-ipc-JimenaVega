@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #define TAM 256
+#define h_addr h_addr_list[0] //ver porque no esta tomando la de netdb.h
 
 int main( int argc, char *argv[] ){
 
@@ -54,30 +55,6 @@ int main( int argc, char *argv[] ){
 			perror("Invalid write.");
 			exit(0);
 		}
-		/*printf( "Ingrese el mensaje a transmitir: " );
-		memset( buffer, '\0', TAM );
-		fgets( buffer, TAM-1, stdin );
-
-		n = (int) write( sockfd, buffer, strlen(buffer) );
-
-		if(n == -1){
-			perror("Invalid write.");
-			exit(0);
-		}
-		// Verificando si se escribió: fin
-		buffer[strlen(buffer)-1] = '\0';
-		if( !strcmp( "fin", buffer ) ) {
-			terminar = 1;
-		}
-
-		memset( buffer, '\0', TAM );
-		n = (int)read( sockfd, buffer, TAM );
-		printf( "Answer: %s\n", buffer );
-
-		if(terminar) {
-			printf("End of execution\n" );
-			exit(0);
-		}*/
 	}
 	return 0;
 } 
