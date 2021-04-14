@@ -12,7 +12,8 @@
 
 int main( int argc, char *argv[] ){
 
-	int sockfd,n;
+	int sockfd;
+	ssize_t n_read,n_write;
 	uint16_t puerto;
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
@@ -44,17 +45,25 @@ int main( int argc, char *argv[] ){
 
 	while(1) {
 
-		memset( buffer, '\0', TAM );
-		n = (int) read(sockfd, buffer, TAM);
-		printf("Server msg:%s\n", buffer);
+		//memset( buffer, '\0', TAM );
+		n_read = read(sockfd, &buffer, TAM);
+		printf("Server msg for client :%s\n", buffer);
 
+		if(n_read < 0){
+			perror("Client: invalid read");
+			exit(EXIT_FAILURE);
+		}
 		
-		n = (int) write(sockfd,"client ACK\n", 18);
-
-		if(n == -1){
-			perror("Invalid write.");
+		n_write = write(sockfd,"client ACK\n", TAM);
+		if(n_write == -1){
+			perror("Client: invalid write.");
 			exit(0);
 		}
+		
+			
+
+	
+		
 	}
 	return 0;
 } 

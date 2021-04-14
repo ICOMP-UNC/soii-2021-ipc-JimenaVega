@@ -8,8 +8,8 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 
-#define TAM 257
-#define MAX_EVENTS 10
+#define TAM 256
+#define MAX_EVENTS 5000
 
 struct epoll_event ev, events_array[MAX_EVENTS];
 int listen_sock, client_sock, ready_fds, epoll_fd;
@@ -17,13 +17,15 @@ int listen_sock, client_sock, ready_fds, epoll_fd;
 int epoll_event_add(int epfd, int fs, int event);
 int epoll_event_del(int epfd,int fd,int event);
 
+
+
+
 //nfds = ready_fds
 int main( int argc, char *argv[] ) {
 	int serv_sock_fd, ctrl_write, ctrl_read;
 	socklen_t clilen;
-	//ssize_t n;
+	char buffer[TAM];
 	uint16_t puerto;
-	//char buffer[TAM];
 	struct sockaddr_in serv_addr, cli_addr;
 
 
@@ -49,9 +51,9 @@ int main( int argc, char *argv[] ) {
 	printf("Proceso: %d - socket disponible: %d\n", getpid(), ntohs(serv_addr.sin_port) );
 
 	listen(serv_sock_fd, MAX_EVENTS);
-	clilen = sizeof(cli_addr);//??
+	clilen = sizeof(cli_addr);
 
-	epoll_fd = epoll_create1(0);//??ver si 0
+	epoll_fd = epoll_create(MAX_EVENTS);
 	if(epoll_fd == -1){
 		perror("Error in epoll_create1()");
 		exit(EXIT_FAILURE);
@@ -67,7 +69,7 @@ int main( int argc, char *argv[] ) {
 
 	while(1){
 		//blocking epoll_Wait
-		ready_fds = epoll_wait(epoll_fd, events_array, MAX_EVENTS, -1);
+		ready_fds = epoll_wait(epoll_fd, events_array, MAX_EVENTS, 500);
 		if(ready_fds == -1){
 			perror("Error in epoll_wait()");
 			exit(EXIT_FAILURE);
@@ -84,15 +86,10 @@ int main( int argc, char *argv[] ) {
 					perror("accept");
 					exit(EXIT_FAILURE);
             	}  
-
-				ctrl_write = (int) write(client_sock, "message <checksum>",18);
-
-				if(ctrl_write < 0){
-					perror("Error in writing client socket");
-					exit(EXIT_FAILURE);
-				}
-
+				//char* msg_to_cli = "";
+				//sprintf(msg_to_cli,"to cli %d: <checksum>",client_sock);
 				//add to interest list
+
 				ev.events = EPOLLIN | EPOLLET;
             	ev.data.fd = client_sock;
 
@@ -101,17 +98,30 @@ int main( int argc, char *argv[] ) {
 					perror("epoll_ctl: client_sock");
 					exit(EXIT_FAILURE);
            		}
+
+				ctrl_write = (int) write(client_sock, "holis",TAM);
+
+				if(ctrl_write < 0){
+					perror("Error in writing client socket");
+					exit(EXIT_FAILURE);
+				}
+
 			}
-			else{
-				char buffer[1024] = {0};
-				ctrl_read = (int) read(events_array[i].data.fd, buffer, sizeof(buffer));
+			else if(events_array[i].events & EPOLLIN){
+
+				
+				ctrl_read = (int) read(events_array[i].data.fd, buffer, TAM);
+
 				if(ctrl_read > 0){
-					printf("\nRECV from cli %d = %s\n", events_array[i].data.fd, buffer);
+					printf("recv from cli %d = %s\n", events_array[i].data.fd, buffer);
 				}
 				else if(ctrl_read < 0){
 					perror("Error reading");
 					exit(EXIT_FAILURE);
 				}
+			}
+			else if(events_array[i].events & EPOLLOUT){
+				printf("server reading\n");
 			}
 	
 		}
