@@ -17,7 +17,6 @@ int main( int argc, char *argv[] ){
 	uint16_t puerto;
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
-	//int terminar = 0;
 	char buffer[TAM];
 
 	if ( argc < 3 ) {

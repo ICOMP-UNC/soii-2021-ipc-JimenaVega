@@ -15,9 +15,7 @@ struct epoll_event ev, events_array[MAX_EVENTS];
 int listen_sock, client_sock, ready_fds, epoll_fd;
 
 int epoll_event_add(int epfd, int fs, int event);
-int epoll_event_del(int epfd,int fd,int event);
-
-
+int epoll_event_del(int epfd,int fd, int event);
 
 
 //nfds = ready_fds

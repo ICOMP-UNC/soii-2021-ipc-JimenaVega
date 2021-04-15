@@ -2,13 +2,15 @@ CC=gcc
 CFLAGS= -g -Wall -pedantic -Werror -Wextra -Wconversion -std=gnu11
 
 #bin/dm
-all: clean bin/cli bin/serv bin/producer_1 bin/producer_2 bin/producer_3
-#bin/dm: 
-#	$(CC) src/deliveryManager.c -o bin/dm
+all: clean bin/cli bin/serv bin/producer_1 bin/producer_2 bin/producer_3 bin/CLI
+
+
 bin/cli:
 	$(CC) $(CFLAGS) src/client.c -o bin/cli
 bin/serv:# src/server.c
 	$(CC) $(CFLAGS) src/server.c -o bin/serv
+bin/CLI:
+	$(CC) $(CFLAGS) src/CLI.c -o bin/CLI
 bin/producer_1:
 	$(CC) $(CFLAGS) src/producer_1.c -o bin/p1
 bin/producer_2:
@@ -18,4 +20,4 @@ bin/producer_3:
 clean:
 	rm -f bin/cli
 	rm -f bin/serv
-	rm -f bin/dm
+	rm -f bin/CLI
