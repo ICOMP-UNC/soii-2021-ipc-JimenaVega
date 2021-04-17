@@ -94,7 +94,7 @@ int config_q(){
 		exit(1);
 	}
 
-	p2_message.message_type = 1;
+	p2_message.message_type = 2;
 	p2_message.message_text.id = 2;
 
 	return serv_qid;

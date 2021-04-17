@@ -1,25 +1,69 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+
+#define SLEEP_TIME 1
 #define Q_NORM_LOAD 3
+#define KEY_PATHNAME "/tmp/mqueue_server_key"
+#define PROJECT_ID 'M'
+#define Q_PERMISSIONS 0660
+
+struct message_text {
+    int id;
+    char buf [200];
+};
+
+struct message {
+    long message_type;
+    struct message_text message_text;
+};
 
 int get_CPUs();
 void get_load(float load_avg[Q_NORM_LOAD]);
+int config_q();
+
+struct message p3_message;
 
 int main(){
 
-    float load_avg[Q_NORM_LOAD];
+    int serv_qid = config_q();
+
     int norm_load[Q_NORM_LOAD];
+    float load_avg[Q_NORM_LOAD];
     float n_cpus = (float)get_CPUs();
-    get_load(load_avg);
+    
 
-    for(int i=0; i<Q_NORM_LOAD; i++){
-        norm_load[i] = (int)((load_avg[i]/n_cpus)*100);
-    }
+    while(1){
+        sleep(SLEEP_TIME);
 
-    for(int i=0; i<Q_NORM_LOAD;i++){
-        printf("norm_load [%d] = %d%%\n",i,norm_load[i]);
+        get_load(load_avg);
+
+        for(int i=0; i<Q_NORM_LOAD; i++){
+            norm_load[i] = (int)((load_avg[i]/n_cpus)*100);
+        }
+
+        char bbf[60] = "";
+        for(int i=0; i<Q_NORM_LOAD;i++){
+            char buf [20];
+            sprintf (buf, "%d ", norm_load[i]);
+            strcat (bbf, buf);
+            
+        }
+        //is this ok? controlar p1 too
+        strcpy(p3_message.message_text.buf, bbf);
+        printf("norm_load  = %s%%\n",bbf);
+
+        if(msgsnd(serv_qid, &p3_message, sizeof(struct message_text),0) == -1){
+			perror("P2: msgsnd error");
+			exit(EXIT_FAILURE);
+		}
+
+        bzero(bbf, 60);
     }
 
     return 0;
@@ -58,4 +102,24 @@ void get_load(float load_avg[Q_NORM_LOAD]){
     for(int i = 1; i < Q_NORM_LOAD; i++){
         load_avg[i] = strtof(strtok(NULL, " "),NULL);    
     }
+}
+
+int config_q(){
+
+	key_t serv_q_key;
+	int serv_qid;
+
+	if((serv_q_key = ftok (KEY_PATHNAME, PROJECT_ID)) == -1){
+		perror("error in P3 ftok");
+		exit(1);
+	}
+	if((serv_qid = msgget(serv_q_key, 0)) == -1){
+		perror("error in P3 msget");
+		exit(1);
+	}
+
+	p3_message.message_type = 2;
+	p3_message.message_text.id = 2;
+
+	return serv_qid;
 }
