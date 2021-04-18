@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/epoll.h>
+#include "../inc/liblist.h"
 
 #define TAM 256
 #define MAX_EVENTS 5000
@@ -16,42 +17,38 @@ int listen_sock, client_sock, ready_fds, epoll_fd;
 
 int epoll_event_add(int epfd, int fs, int event);
 int epoll_event_del(int epfd,int fd, int event);
+int config_socket(uint16_t port);
 
 
-//nfds = ready_fds
+
 int main( int argc, char *argv[] ) {
 	int serv_sock_fd, ctrl_write, ctrl_read;
 	socklen_t clilen;
 	char buffer[TAM];
-	uint16_t puerto;
-	struct sockaddr_in serv_addr, cli_addr;
+	uint16_t port;
+	struct sockaddr_in cli_addr;
 
 
 	if (argc < 2) {
-    	fprintf( stderr, "You should write: %s <port>\n", argv[0] );
-		exit(1);
+    	fprintf(stderr, "You should write: %s <port>\n", argv[0]);
+		exit(EXIT_FAILURE);
 	}
-	//socket creation
-	serv_sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+	port = (uint16_t) atoi(argv[1]);
+	serv_sock_fd = config_socket(port);
 
-	memset((char *) &serv_addr, 0, sizeof(serv_addr));
-	puerto = (uint16_t) atoi(argv[1]);
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(puerto);
-
- 	//printf("The IP address is %s\n", inet_ntoa(serv_addr));
-
-	//binding
-	if (bind(serv_sock_fd, (struct sockaddr *) &serv_addr, sizeof( serv_addr )) < 0 ) {
-		perror("Server: error in binding fd with address");
-		exit(1);
-	}
-
-	printf("Proceso: %d - socket disponible: %d\n", getpid(), ntohs(serv_addr.sin_port) );
-
-	listen(serv_sock_fd, MAX_EVENTS);
 	clilen = sizeof(cli_addr);
+
+	node_t * head = NULL;
+    head = (node_t *) malloc(sizeof(node_t));
+    if (head == NULL) {
+        return 1;
+    }
+
+    head->val = 1;
+    head->next = NULL;
+
+	push_start(&head, 2);
+	print_list(head);
 
 	epoll_fd = epoll_create(MAX_EVENTS);
 	if(epoll_fd == -1){
@@ -86,11 +83,8 @@ int main( int argc, char *argv[] ) {
 					perror("accept");
 					exit(EXIT_FAILURE);
             	}  
-				//char* msg_to_cli = "";
-				//sprintf(msg_to_cli,"to cli %d: <checksum>",client_sock);
-				//add to interest list
 
-				ev.events = EPOLLIN | EPOLLET;
+				ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
             	ev.data.fd = client_sock;
 
 			    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_sock,
@@ -98,8 +92,8 @@ int main( int argc, char *argv[] ) {
 					perror("epoll_ctl: client_sock");
 					exit(EXIT_FAILURE);
            		}
-
-				ctrl_write = (int) write(client_sock, "holis",TAM);
+				printf("Envio el checksum a client %d\n", client_sock);
+				ctrl_write = (int) write(client_sock, "1- a ver si pasas this checksum",TAM);
 
 				if(ctrl_write < 0){
 					perror("Error in writing client socket");
@@ -107,25 +101,60 @@ int main( int argc, char *argv[] ) {
 				}
 
 			}
-			else if(events_array[i].events & EPOLLIN){
+			else{
+				if(events_array[i].events & EPOLLIN){
 
-				
-				ctrl_read = (int) read(events_array[i].data.fd, buffer, TAM);
+					printf("Leo lo que me mando cliente %d\n", events_array[i].data.fd);
+					ctrl_read = (int) read(events_array[i].data.fd, buffer, TAM);
 
-				if(ctrl_read > 0){
-					printf("recv from cli %d = %s\n", events_array[i].data.fd, buffer);
+					if(ctrl_read > 0){
+						printf("recv from cli %d = %s\n", events_array[i].data.fd, buffer);
+					}
+					else if(ctrl_read < 0){
+						perror("Error reading");
+						exit(EXIT_FAILURE);
+					}
 				}
-				else if(ctrl_read < 0){
-					perror("Error reading");
-					exit(EXIT_FAILURE);
+				else if(events_array[i].events & EPOLLOUT){
+
+					printf("Le mando mensajes normalmente el cli %d\n",events_array[i].data.fd);
+					char buf [TAM];
+        			sprintf (buf, "2- client: %d pasaste", events_array[i].data.fd);
+					ctrl_write = (int) write(events_array[i].data.fd, buf, TAM);
 				}
 			}
-			else if(events_array[i].events & EPOLLOUT){
-				printf("server reading\n");
-			}
+
 	
 		}
 	}
 
 	return 0; 
 } 
+
+int config_socket(uint16_t port){
+
+	struct sockaddr_in serv_addr;
+	int serv_sock_fd;
+	//socket creation
+	serv_sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+
+	memset((char *) &serv_addr, 0, sizeof(serv_addr));
+	
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(port);
+
+	//binding
+	if (bind(serv_sock_fd, (struct sockaddr *) &serv_addr, sizeof( serv_addr )) < 0 ) {
+		perror("Server: error in binding fd with address");
+		exit(1);
+	}
+
+	printf("Proceso: %d - socket disponible: %d\n", getpid(), ntohs(serv_addr.sin_port) );
+
+	listen(serv_sock_fd, MAX_EVENTS);
+
+	return serv_sock_fd;
+
+}

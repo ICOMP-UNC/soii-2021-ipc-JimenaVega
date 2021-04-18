@@ -47,16 +47,17 @@ int main( int argc, char *argv[] ){
 
 	while(1) {
 
-		//memset( buffer, '\0', TAM );
+		//I need checksum control here
 		n_read = read(sockfd, &buffer, TAM);
-		printf("Server msg for client :%s\n", buffer);
+		printf("Server msg for client: %s\n", buffer);
+		//zheli
 
 		if(n_read < 0){
 			perror("Client: invalid read");
 			exit(EXIT_FAILURE);
 		}
-		
-		n_write = write(sockfd,"client ACK\n", TAM);
+		//It should sends its ID+IP
+		n_write = write(sockfd,"client ACK :)))\n", TAM);
 		if(n_write == -1){
 			perror("Client: invalid write.");
 			exit(0);
