@@ -40,6 +40,8 @@ int main( int argc, char *argv[] ) {
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(puerto);
 
+ 	//printf("The IP address is %s\n", inet_ntoa(serv_addr));
+
 	//binding
 	if (bind(serv_sock_fd, (struct sockaddr *) &serv_addr, sizeof( serv_addr )) < 0 ) {
 		perror("Server: error in binding fd with address");

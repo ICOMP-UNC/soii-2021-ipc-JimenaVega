@@ -28,6 +28,8 @@ int main( int argc, char *argv[] ){
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	server = gethostbyname(argv[1]);
 
+	//printf("host ip = %s\n", server->h_name);
+
 	memset( (char *) &serv_addr, '0', sizeof(serv_addr) );
 	serv_addr.sin_family = AF_INET;
 
@@ -35,6 +37,7 @@ int main( int argc, char *argv[] ){
 		   (char *)&serv_addr.sin_addr.s_addr, 
 		   (size_t) server->h_length );
 
+	//printf("Direccion IP de host %s = %s\n", argv[1], serv_addr.sin_addr.s_addr);
 	serv_addr.sin_port = htons(puerto);
 
 	if (connect( sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr ) ) < 0 ) {
@@ -58,10 +61,6 @@ int main( int argc, char *argv[] ){
 			perror("Client: invalid write.");
 			exit(0);
 		}
-		
-			
-
-	
 		
 	}
 	return 0;
