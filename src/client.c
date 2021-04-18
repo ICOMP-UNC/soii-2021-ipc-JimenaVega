@@ -45,23 +45,57 @@ int main( int argc, char *argv[] ){
 		exit( 1 );
 	}
 
+	int single_client = 0; //el cliente fue añadido a la lista de solteros por el server
+	int regular_msg = 0;
 	while(1) {
 
-		//I need checksum control here
+		//It should sends its ID+IP+ M:cli solicitation
+		if(!single_client){
+			n_write = write(sockfd,"cliSOL\n", TAM);
+			if(n_write == -1){
+				perror("Client: invalid write.");
+				exit(0);
+			}
+		}
+		//leo lo que me mando el server
 		n_read = read(sockfd, &buffer, TAM);
-		printf("Server msg for client: %s\n", buffer);
-		//zheli
-
 		if(n_read < 0){
 			perror("Client: invalid read");
 			exit(EXIT_FAILURE);
 		}
-		//It should sends its ID+IP
-		n_write = write(sockfd,"client ACK :)))\n", TAM);
-		if(n_write == -1){
-			perror("Client: invalid write.");
-			exit(0);
+		printf("Server msg for client: %s\n", buffer);
+
+		//server envio M:single-client + checksum 
+		if(strncmp(buffer,"single", 6) == 0){
+			single_client = 1;
 		}
+		else{
+			regular_msg = 1;
+		}
+		
+		if(single_client){
+			/*completar con checksum control*/
+			if(regular_msg){
+				//ACK regular
+				n_write = write(sockfd,"ACKR\n", TAM);
+				if(n_write == -1){
+					perror("Client: invalid write.");
+					exit(0);
+				}
+
+			}else{
+				//ACK-client-solicitation
+				n_write = write(sockfd,"ACKS\n", TAM);
+				if(n_write == -1){
+					perror("Client: invalid write.");
+					exit(0);
+				}
+			}
+		}
+	
+
+
+
 		
 	}
 	return 0;

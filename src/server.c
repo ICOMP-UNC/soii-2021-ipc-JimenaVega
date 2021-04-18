@@ -92,14 +92,13 @@ int main( int argc, char *argv[] ) {
 					perror("epoll_ctl: client_sock");
 					exit(EXIT_FAILURE);
            		}
-				printf("Envio el checksum a client %d\n", client_sock);
-				ctrl_write = (int) write(client_sock, "1- a ver si pasas this checksum",TAM);
-
+				// printf("Envio el checksum a client %d\n", client_sock);
+				// ctrl_write = (int) write(client_sock, "1- a ver si pasas this checksum",TAM);
+				printf("server: hice el accept \n");
 				if(ctrl_write < 0){
 					perror("Error in writing client socket");
 					exit(EXIT_FAILURE);
 				}
-
 			}
 			else{
 				if(events_array[i].events & EPOLLIN){
@@ -107,19 +106,43 @@ int main( int argc, char *argv[] ) {
 					printf("Leo lo que me mando cliente %d\n", events_array[i].data.fd);
 					ctrl_read = (int) read(events_array[i].data.fd, buffer, TAM);
 
-					if(ctrl_read > 0){
-						printf("recv from cli %d = %s\n", events_array[i].data.fd, buffer);
+					
+					if(ctrl_read == 0){
+						printf("client %d disconnection  = %s\n", events_array[i].data.fd, buffer);
 					}
 					else if(ctrl_read < 0){
 						perror("Error reading");
 						exit(EXIT_FAILURE);
 					}
+					printf("client %d: message = %s\n", events_array[i].data.fd, buffer);
+
+					//cli solicitaiton ack
+					if(strncmp(buffer, "cliSOL", 6) == 0){
+						//add to list
+						
+						ctrl_write = (int) write(events_array[i].data.fd, "single", TAM);
+					}
+					else if(strncmp(buffer,"ACKS", 4) == 0){
+						//in list->passed_chksm = 1
+						printf("client %d singlelist->passed_chksm = 1\n", events_array[i].data.fd);
+
+					}else{
+						//el cliente me envio un ack regular
+						//parar timeout
+					}
+					//if message = cli solicitation
+					//add to list  & send(Write) checksum
+					/*add timeout control*/
+					//message == ACK-clisolicitation 
+					// in list->passed_chksm = 1
+					//message == ACK regular
+
 				}
 				else if(events_array[i].events & EPOLLOUT){
 
 					printf("Le mando mensajes normalmente el cli %d\n",events_array[i].data.fd);
 					char buf [TAM];
-        			sprintf (buf, "2- client: %d pasaste", events_array[i].data.fd);
+        			sprintf (buf, "2- client: %d mensaje del productor", events_array[i].data.fd);
 					ctrl_write = (int) write(events_array[i].data.fd, buf, TAM);
 				}
 			}
