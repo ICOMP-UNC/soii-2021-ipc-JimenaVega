@@ -11,6 +11,7 @@
 
 
 #include "../inc/liblist.h"
+#include "../inc/client_list.h"
 
 #define TAM 256
 #define MAX_EVENTS 5000
@@ -37,22 +38,19 @@ int main( int argc, char *argv[] ) {
 		exit(EXIT_FAILURE);
 	}
 	port = (uint16_t) atoi(argv[1]);
+
 	//socket configuration
 	serv_sock_fd = config_socket(port);
 	clilen = sizeof(cli_addr);
 
-	//list init
-	node_t * head = NULL;
-    head = (node_t *) malloc(sizeof(node_t));
-    if (head == NULL) {
-        return 1;
-    }
+	//list creation
+    struct Node* clients_head = NULL;
+    push(&clients_head, "172.1.1.1", 2121, serv_sock_fd);
+	push(&clients_head, "169.21.21.2", 2121, serv_sock_fd);
+	print_clients_list(clients_head);
 
-    head->val = 1;
-    head->next = NULL;
-
-	push_start(&head, 2);
-	print_list(head);
+	delete_node(&clients_head,"172.1.1.1");
+	print_clients_list(clients_head);
 
 	//epoll configuration
 	epoll_fd = epoll_create(MAX_EVENTS);
