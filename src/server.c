@@ -7,6 +7,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/epoll.h>
+#include <arpa/inet.h>
+
+
 #include "../inc/liblist.h"
 
 #define TAM 256
@@ -34,10 +37,11 @@ int main( int argc, char *argv[] ) {
 		exit(EXIT_FAILURE);
 	}
 	port = (uint16_t) atoi(argv[1]);
+	//socket configuration
 	serv_sock_fd = config_socket(port);
-
 	clilen = sizeof(cli_addr);
 
+	//list init
 	node_t * head = NULL;
     head = (node_t *) malloc(sizeof(node_t));
     if (head == NULL) {
@@ -50,9 +54,10 @@ int main( int argc, char *argv[] ) {
 	push_start(&head, 2);
 	print_list(head);
 
+	//epoll configuration
 	epoll_fd = epoll_create(MAX_EVENTS);
 	if(epoll_fd == -1){
-		perror("Error in epoll_create1()");
+		perror("server: epoll_create error");
 		exit(EXIT_FAILURE);
 	}
 
@@ -60,12 +65,12 @@ int main( int argc, char *argv[] ) {
 	ev.data.fd = serv_sock_fd;
 
 	if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, serv_sock_fd, &ev) == -1){
-		perror("epoll_ctl: listen:sock");
+		perror("server: epoll_ctl error");
 		exit(EXIT_FAILURE);
 	}
 
 	while(1){
-		//blocking epoll_Wait
+		
 		ready_fds = epoll_wait(epoll_fd, events_array, MAX_EVENTS, 500);
 		if(ready_fds == -1){
 			perror("Error in epoll_wait()");
@@ -83,15 +88,21 @@ int main( int argc, char *argv[] ) {
 					perror("accept");
 					exit(EXIT_FAILURE);
             	}  
+				//--------------test------------------------
+				printf("address of client [%d]= %d\n",client_sock, cli_addr.sin_addr.s_addr);
+				char *client_ip = inet_ntoa(cli_addr.sin_addr);
+				printf("client ip: %s\n", client_ip);
+				//------------------------------------------
 
 				ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
             	ev.data.fd = client_sock;
 
 			    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_sock,
                         &ev) == -1) {
-					perror("epoll_ctl: client_sock");
+					perror("server: epoll_ctl error");
 					exit(EXIT_FAILURE);
            		}
+
 				printf("Envio el checksum a client %d\n", client_sock);
 				ctrl_write = (int) write(client_sock, "1- a ver si pasas this checksum",TAM);
 
@@ -99,7 +110,6 @@ int main( int argc, char *argv[] ) {
 					perror("Error in writing client socket");
 					exit(EXIT_FAILURE);
 				}
-
 			}
 			else{
 				if(events_array[i].events & EPOLLIN){
@@ -142,16 +152,18 @@ int config_socket(uint16_t port){
 	memset((char *) &serv_addr, 0, sizeof(serv_addr));
 	
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_addr.s_addr = inet_addr("192.168.100.7");
+	//INADDR_ANY;
 	serv_addr.sin_port = htons(port);
 
+	printf("server: server address = %d\n", serv_addr.sin_addr.s_addr);
 	//binding
 	if (bind(serv_sock_fd, (struct sockaddr *) &serv_addr, sizeof( serv_addr )) < 0 ) {
 		perror("Server: error in binding fd with address");
 		exit(1);
 	}
 
-	printf("Proceso: %d - socket disponible: %d\n", getpid(), ntohs(serv_addr.sin_port) );
+	printf("Process: %d - available socket: %d\n", getpid(), ntohs(serv_addr.sin_port) );
 
 	listen(serv_sock_fd, MAX_EVENTS);
 

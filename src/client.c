@@ -6,6 +6,8 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 #include <unistd.h>
+#include <arpa/inet.h>
+
 
 #define TAM 256
 #define h_addr h_addr_list[0] //ver porque no esta tomando la de netdb.h
@@ -26,7 +28,10 @@ int main( int argc, char *argv[] ){
 
 	puerto = (uint16_t)atoi(argv[2]);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	server = gethostbyname(argv[1]);
+	//ip del server
+	server = gethostbyname("192.168.100.7");
+	//gethostbyname("192.168.100.7");
+	//gethostbyname(argv[1]);
 
 	//printf("host ip = %s\n", server->h_name);
 
@@ -38,12 +43,16 @@ int main( int argc, char *argv[] ){
 		   (size_t) server->h_length );
 
 	//printf("Direccion IP de host %s = %s\n", argv[1], serv_addr.sin_addr.s_addr);
+
 	serv_addr.sin_port = htons(puerto);
+
+	printf("1-address of server = %d\n", serv_addr.sin_addr.s_addr);
 
 	if (connect( sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr ) ) < 0 ) {
 		perror( "Client: connection error");
-		exit( 1 );
+		exit(1);
 	}
+	printf("2-address of server = %d\n", serv_addr.sin_addr.s_addr);
 
 	while(1) {
 
