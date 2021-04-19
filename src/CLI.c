@@ -48,8 +48,8 @@ int main(int argc, char *argv[]){
                 perror("Client: invalid read");
                 exit(EXIT_FAILURE);
             }
-            
-            n_write = write(sockfd,"CLI 172.2.2.2 port add <cli-ip> port P1\n", TAM);
+            //formato de mensaje CLI <ommand> <cli-ip> <cli-port> <producer>
+            n_write = write(sockfd,"CLI add 198.162.1.1 2525 P1\n", TAM);
             if(n_write == -1){
                 perror("Client: invalid write.");
                 exit(0);

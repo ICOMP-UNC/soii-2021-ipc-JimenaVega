@@ -19,11 +19,14 @@
 struct epoll_event ev, events_array[MAX_EVENTS];
 int listen_sock, client_sock, ready_fds, epoll_fd;
 
-struct Node* clients_head = NULL;
+struct Node* single_clients = NULL;
+struct Node* p1 = NULL;
+struct Node* p2 = NULL;
+struct Node* p3 = NULL;
 
 
 int config_socket(uint16_t port);
-void message_interpreter(char buffer[TAM]);
+void message_interpreter(char buffer[TAM], int clisockfd);
 
 
 
@@ -117,7 +120,7 @@ int main( int argc, char *argv[] ) {
 					}
 
 					//parser func & interpreter
-					message_interpreter(buffer);
+					message_interpreter(buffer, events_array[i].data.fd);
 
 
 
@@ -164,16 +167,15 @@ int config_socket(uint16_t port){
 
 }
 
-void message_interpreter(char buffer[TAM]){
+void message_interpreter(char buffer[TAM], int clisockfd){
 
 	int aux_port = 0;
 	char* aux_ip = "";
 	char* token = strtok(buffer, " ");
+	char* producer = "";
 
-	if(strncmp(token, "ACK", 3) == 0){
-		//parse & add to list
+	if((strncmp(token, "ACK", 3) == 0)){
 	
-		printf("----------------------------\n");
 		for(int i=0; i<2; i++ ){
         
 			token = strtok(NULL," ");
@@ -183,12 +185,57 @@ void message_interpreter(char buffer[TAM]){
 			else{
 				aux_ip = strdup(token);
 			}
-			printf("token = %s\n", token);
 		}
-		printf("IP = %s port = %d\n", aux_ip, aux_port);
-		printf("----------------------------\n");
+		
+		if(!is_in_list(single_clients,aux_ip)){
+			push(&single_clients, aux_ip, aux_port, clisockfd);
+		}
+		//print_clients_list(single_clients);
     }
 	else if(strncmp(token, "CLI", 3) == 0){
 		//parse, trverse client list and put into marriedclient list
+		token = strtok(NULL," ");
+		if((strncmp(token, "add", 3) == 0)){
+			//push
+			for(int i=0; i<3; i++){
+        
+				token = strtok(NULL," ");
+				if(i == 1){
+					aux_port = (int) strtol(token, (char **)NULL, 10);
+				}
+				else if(i == 0){
+					aux_ip = strdup(token);
+				}
+				else{
+					producer = strdup(token);
+				}
+			}
+			if(!is_in_list(single_clients,aux_ip)){
+				//push(&single_clients, aux_ip, aux_port, clisockfd);
+				if(strncmp(producer, "P1", 2) == 0){
+					push(&p1, aux_ip, aux_port, clisockfd);
+					print_clients_list(p1);
+				}
+				else if(strncmp(producer, "P2", 2) == 0){
+					push(&p2, aux_ip, aux_port, clisockfd);
+					print_clients_list(p2);
+				}
+				else if(strncmp(producer, "P3", 2) == 0){
+					push(&p3, aux_ip, aux_port, clisockfd);
+					print_clients_list(p3);
+				}
+				delete_node(&single_clients, aux_ip);
+
+			}
+		}
+		else if((strncmp(token, "delete", 6) == 0)){
+			//pop
+		}
+		else if((strncmp(token, "log", 6) == 0)){
+			//still dont know
+		}
+
 	}
 }
+
+
