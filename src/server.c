@@ -19,9 +19,11 @@
 struct epoll_event ev, events_array[MAX_EVENTS];
 int listen_sock, client_sock, ready_fds, epoll_fd;
 
-int epoll_event_add(int epfd, int fs, int event);
-int epoll_event_del(int epfd,int fd, int event);
+struct Node* clients_head = NULL;
+
+
 int config_socket(uint16_t port);
+void message_interpreter(char buffer[TAM]);
 
 
 
@@ -42,15 +44,6 @@ int main( int argc, char *argv[] ) {
 	//socket configuration
 	serv_sock_fd = config_socket(port);
 	clilen = sizeof(cli_addr);
-
-	//list creation
-    struct Node* clients_head = NULL;
-    push(&clients_head, "172.1.1.1", 2121, serv_sock_fd);
-	push(&clients_head, "169.21.21.2", 2121, serv_sock_fd);
-	print_clients_list(clients_head);
-
-	delete_node(&clients_head,"172.1.1.1");
-	print_clients_list(clients_head);
 
 	//epoll configuration
 	epoll_fd = epoll_create(MAX_EVENTS);
@@ -87,9 +80,9 @@ int main( int argc, char *argv[] ) {
 					exit(EXIT_FAILURE);
             	}  
 				//--------------test------------------------
-				printf("address of client [%d]= %d\n",client_sock, cli_addr.sin_addr.s_addr);
+				printf("address of client [%d]= %d",client_sock, cli_addr.sin_addr.s_addr);
 				char *client_ip = inet_ntoa(cli_addr.sin_addr);
-				printf("client ip: %s\n", client_ip);
+				printf(" client ip: %s\n", client_ip);
 				//------------------------------------------
 
 				ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
@@ -122,6 +115,12 @@ int main( int argc, char *argv[] ) {
 						perror("Error reading");
 						exit(EXIT_FAILURE);
 					}
+
+					//parser func & interpreter
+					message_interpreter(buffer);
+
+
+
 				}
 				else if(events_array[i].events & EPOLLOUT){
 
@@ -143,28 +142,53 @@ int config_socket(uint16_t port){
 
 	struct sockaddr_in serv_addr;
 	int serv_sock_fd;
-	//socket creation
+	
 	serv_sock_fd = socket(AF_INET, SOCK_STREAM, 0);
-
 
 	memset((char *) &serv_addr, 0, sizeof(serv_addr));
 	
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = inet_addr("192.168.100.7");
-	//INADDR_ANY;
+	serv_addr.sin_addr.s_addr = inet_addr("192.168.100.7");//INADDR_ANY;
 	serv_addr.sin_port = htons(port);
-
 	printf("server: server address = %d\n", serv_addr.sin_addr.s_addr);
-	//binding
+
 	if (bind(serv_sock_fd, (struct sockaddr *) &serv_addr, sizeof( serv_addr )) < 0 ) {
 		perror("Server: error in binding fd with address");
 		exit(1);
 	}
 
 	printf("Process: %d - available socket: %d\n", getpid(), ntohs(serv_addr.sin_port) );
-
 	listen(serv_sock_fd, MAX_EVENTS);
 
 	return serv_sock_fd;
 
+}
+
+void message_interpreter(char buffer[TAM]){
+
+	int aux_port = 0;
+	char* aux_ip = "";
+	char* token = strtok(buffer, " ");
+
+	if(strncmp(token, "ACK", 3) == 0){
+		//parse & add to list
+	
+		printf("----------------------------\n");
+		for(int i=0; i<2; i++ ){
+        
+			token = strtok(NULL," ");
+			if(i == 1){
+				aux_port = (int) strtol(token, (char **)NULL, 10);
+			}
+			else{
+				aux_ip = strdup(token);
+			}
+			printf("token = %s\n", token);
+		}
+		printf("IP = %s port = %d\n", aux_ip, aux_port);
+		printf("----------------------------\n");
+    }
+	else if(strncmp(token, "CLI", 3) == 0){
+		//parse, trverse client list and put into marriedclient list
+	}
 }

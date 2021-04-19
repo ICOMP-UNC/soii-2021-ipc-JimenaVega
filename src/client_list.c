@@ -1,3 +1,4 @@
+/*references https://www.geeksforgeeks.org/linked-list-set-3-deleting-node/*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,9 +41,21 @@ void delete_node(struct Node** head_ref, char* key){
  
     free(temp); 
 }
+
+int is_in_list(struct Node* node, char* key){
+  
+    while(node != NULL){
+        if(strcmp(node->ip, key) == 0){
+            return 1;
+        }
+        node = node->next;
+    }
+    return 0;
+}
  
 
 void print_clients_list(struct Node* node){
+
     while (node != NULL) {
         printf("\nIP: %s ", node->ip);
         printf("port: %d \n", node->port);

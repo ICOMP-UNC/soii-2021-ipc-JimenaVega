@@ -66,7 +66,7 @@ int main( int argc, char *argv[] ){
 			exit(EXIT_FAILURE);
 		}
 		//It should sends its ID+IP
-		n_write = write(sockfd,"client ACK :)))\n", TAM);
+		n_write = write(sockfd,"ACK 172.1.1.1 2525", TAM);
 		if(n_write == -1){
 			perror("Client: invalid write.");
 			exit(0);

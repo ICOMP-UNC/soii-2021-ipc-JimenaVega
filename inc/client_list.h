@@ -11,8 +11,9 @@ struct Node {
     struct Node* next;
 };
 
-extern void push(struct Node** head_ref, char*, int, int);
+extern void push(struct Node**, char*, int, int);
 extern void delete_node(struct Node** head_ref, char*);
-extern void print_clients_list(struct Node* node);
+extern void print_clients_list(struct Node*);
+extern int is_in_list(struct Node*, char*);
 
 #endif
