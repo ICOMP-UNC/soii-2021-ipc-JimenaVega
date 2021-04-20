@@ -55,12 +55,13 @@ int is_in_list(struct Node* node, char* key){
  
 
 void print_clients_list(struct Node* node){
-
+    printf("\nprinting list...\n");
     while (node != NULL) {
         printf("\nIP: %s ", node->ip);
         printf("port: %d \n", node->port);
         printf("socket: %d \n", node->cli_sock_fd);
         node = node->next;
     }
+    printf("---------------\n");
 }
  

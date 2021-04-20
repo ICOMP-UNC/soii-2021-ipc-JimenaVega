@@ -12,6 +12,12 @@
 #define TAM 256
 #define h_addr h_addr_list[0] //ver porque no esta tomando la de netdb.h
 
+
+//argv[1] = <my-ip>
+//argv[2] = <server-ip>
+//argv[3] = <port>
+
+//en ACK se manda mi ip y port
 int main( int argc, char *argv[] ){
 
 	int sockfd;
@@ -21,19 +27,15 @@ int main( int argc, char *argv[] ){
 	struct hostent *server;
 	char buffer[TAM];
 
-	if ( argc < 3 ) {
-		fprintf( stderr, "You should enter: %s <host> <port>\n", argv[0]);
+	if ( argc < 4 ) {
+		fprintf( stderr, "You should enter: %s <my-ip> <server-ip> <port>\n", argv[0]);
 		exit( 0 );
 	}
 
-	puerto = (uint16_t)atoi(argv[2]);
+	puerto = (uint16_t)atoi(argv[3]);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	//ip del server
-	server = gethostbyname("192.168.100.7");
+	server = gethostbyname(argv[2]);
 	//gethostbyname("192.168.100.7");
-	//gethostbyname(argv[1]);
-
-	//printf("host ip = %s\n", server->h_name);
 
 	memset( (char *) &serv_addr, '0', sizeof(serv_addr) );
 	serv_addr.sin_family = AF_INET;
@@ -42,31 +44,28 @@ int main( int argc, char *argv[] ){
 		   (char *)&serv_addr.sin_addr.s_addr, 
 		   (size_t) server->h_length );
 
-	//printf("Direccion IP de host %s = %s\n", argv[1], serv_addr.sin_addr.s_addr);
-
 	serv_addr.sin_port = htons(puerto);
-
-	printf("1-address of server = %d\n", serv_addr.sin_addr.s_addr);
 
 	if (connect( sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr ) ) < 0 ) {
 		perror( "Client: connection error");
 		exit(1);
 	}
-	printf("2-address of server = %d\n", serv_addr.sin_addr.s_addr);
 
 	while(1) {
 
 		//I need checksum control here
 		n_read = read(sockfd, &buffer, TAM);
 		printf("Server msg for client: %s\n", buffer);
-		//zheli
 
 		if(n_read < 0){
 			perror("Client: invalid read");
 			exit(EXIT_FAILURE);
 		}
-		//It should sends its ID+IP
-		n_write = write(sockfd,"ACK 172.1.1.1 2525", TAM);
+		//formato = ACK <my-ip> <port>
+		char to_send [TAM];
+        sprintf (to_send, "ACK %s %s", argv[1], argv[3]);
+		printf("client to_send = %s\n", to_send);
+		n_write = write(sockfd,to_send, TAM);
 		if(n_write == -1){
 			perror("Client: invalid write.");
 			exit(0);

@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
     int sockfd;
 
     if (argc < 3){
-		fprintf(stderr, "You should enter: %s <host> <port>\n", argv[0]);
+		fprintf(stderr, "You should enter: %s <server-ip> <port>\n", argv[0]);
 		exit(0);
 	}
 
@@ -48,11 +48,15 @@ int main(int argc, char *argv[]){
                 perror("Client: invalid read");
                 exit(EXIT_FAILURE);
             }
-            //formato de mensaje CLI <ommand> <cli-ip> <cli-port> <producer>
-            n_write = write(sockfd,"CLI add 198.162.1.1 2525 P1\n", TAM);
+            //formato de mensaje CLI <ommand> <client-ip> <client-port> <producer>
+            char to_send [TAM];
+            sprintf (to_send, "CLI %s", input);
+            printf("CLI to_send = %s\n", to_send);
+
+            n_write = write(sockfd, to_send, TAM);
             if(n_write == -1){
                 perror("Client: invalid write.");
-                exit(0);
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -80,7 +84,6 @@ int validate_input(char* input){
     }
 
     while(token != NULL){
-        
         token = strtok(NULL," ");
         count++;
     }
@@ -96,9 +99,9 @@ int validate_input(char* input){
 
 void print_prompt(){
     printf("Please enter one of the following commands:\n");
-    printf("add <ip> <port> <producer>\n");
-    printf("delete <ip> <port> <producer>\n");
-    printf("log <ip> <port>\n");
+    printf("add <client-ip> <port> <producer>\n");
+    printf("delete <client-ip> <port> <producer>\n");
+    printf("log <client-ip> <port>\n");
 
 }
 
@@ -111,7 +114,8 @@ int config_socket(char *argv[]){
 
 	puerto = (uint16_t)atoi(argv[2]);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	server = gethostbyname(argv[1]);
+	//server = gethostbyname(argv[1]);
+    server = gethostbyname("192.168.100.7");
 
 	memset( (char *) &serv_addr, '0', sizeof(serv_addr) );
 	serv_addr.sin_family = AF_INET;

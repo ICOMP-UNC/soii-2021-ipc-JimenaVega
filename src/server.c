@@ -27,7 +27,7 @@ struct Node* p3 = NULL;
 
 int config_socket(uint16_t port);
 void message_interpreter(char buffer[TAM], int clisockfd);
-
+void suscribe_client(char *producer, char* ip, int port, int clisockfd);
 
 
 int main( int argc, char *argv[] ) {
@@ -83,9 +83,8 @@ int main( int argc, char *argv[] ) {
 					exit(EXIT_FAILURE);
             	}  
 				//--------------test------------------------
-				printf("address of client [%d]= %d",client_sock, cli_addr.sin_addr.s_addr);
 				char *client_ip = inet_ntoa(cli_addr.sin_addr);
-				printf(" client ip: %s\n", client_ip);
+				printf(" client [%d] ip: %s\n", client_sock, client_ip);
 				//------------------------------------------
 
 				ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
@@ -108,11 +107,11 @@ int main( int argc, char *argv[] ) {
 			else{
 				if(events_array[i].events & EPOLLIN){
 
-					printf("Leo lo que me mando cliente %d\n", events_array[i].data.fd);
+					//printf("Leo lo que me mando cliente %d\n", events_array[i].data.fd);
 					ctrl_read = (int) read(events_array[i].data.fd, buffer, TAM);
 
 					if(ctrl_read > 0){
-						printf("recv from cli %d = %s\n", events_array[i].data.fd, buffer);
+						printf("client [%d] : %s\n", events_array[i].data.fd, buffer);
 					}
 					else if(ctrl_read < 0){
 						perror("Error reading");
@@ -127,9 +126,8 @@ int main( int argc, char *argv[] ) {
 				}
 				else if(events_array[i].events & EPOLLOUT){
 
-					printf("Le mando mensajes normalmente el cli %d\n",events_array[i].data.fd);
 					char buf [TAM];
-        			sprintf (buf, "2- client: %d pasaste", events_array[i].data.fd);
+        			sprintf (buf, "2- client: %d mensaje regular", events_array[i].data.fd);
 					ctrl_write = (int) write(events_array[i].data.fd, buf, TAM);
 				}
 			}
@@ -193,10 +191,11 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 		//print_clients_list(single_clients);
     }
 	else if(strncmp(token, "CLI", 3) == 0){
+
 		//parse, trverse client list and put into marriedclient list
 		token = strtok(NULL," ");
 		if((strncmp(token, "add", 3) == 0)){
-			//push
+
 			for(int i=0; i<3; i++){
         
 				token = strtok(NULL," ");
@@ -210,22 +209,13 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 					producer = strdup(token);
 				}
 			}
-			if(!is_in_list(single_clients,aux_ip)){
-				//push(&single_clients, aux_ip, aux_port, clisockfd);
-				if(strncmp(producer, "P1", 2) == 0){
-					push(&p1, aux_ip, aux_port, clisockfd);
-					print_clients_list(p1);
-				}
-				else if(strncmp(producer, "P2", 2) == 0){
-					push(&p2, aux_ip, aux_port, clisockfd);
-					print_clients_list(p2);
-				}
-				else if(strncmp(producer, "P3", 2) == 0){
-					push(&p3, aux_ip, aux_port, clisockfd);
-					print_clients_list(p3);
-				}
-				delete_node(&single_clients, aux_ip);
-
+	
+			if(is_in_list(single_clients, aux_ip)){
+		
+				suscribe_client(producer, aux_ip, aux_port, clisockfd);
+			}
+			else{
+				printf("Client doesn't exist. Please try again.\n");
 			}
 		}
 		else if((strncmp(token, "delete", 6) == 0)){
@@ -237,5 +227,24 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 
 	}
 }
+
+void suscribe_client(char *producer, char* ip, int port, int clisockfd){
+
+	if(strncmp(producer, "P1", 2) == 0){
+		printf("***Es un P1 entonces pusheo\n");
+		push(&p1, ip, port, clisockfd);
+		print_clients_list(p1);
+	}
+	else if(strncmp(producer, "P2", 2) == 0){
+		push(&p2, ip, port, clisockfd);
+		print_clients_list(p2);
+	}
+	else if(strncmp(producer, "P3", 2) == 0){
+		push(&p3, ip, port, clisockfd);
+		print_clients_list(p3);
+	}
+	delete_node(&single_clients, ip);
+}
+
 
 
