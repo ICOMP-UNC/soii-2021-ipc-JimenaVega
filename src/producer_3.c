@@ -56,14 +56,15 @@ int main(){
         }
         //is this ok? controlar p1 too
         strcpy(p3_message.message_text.buf, bbf);
-        printf("norm_load  = %s%%\n",bbf);
+        printf("P3: norm_load  = %s%%\n",bbf);
 
-        if(msgsnd(serv_qid, &p3_message, sizeof(struct message_text),0) == -1){
-			perror("P2: msgsnd error");
+        if(msgsnd(serv_qid, &p3_message, sizeof(struct message_text),IPC_NOWAIT) == -1){
+			perror("P3: msgsnd error");
 			exit(EXIT_FAILURE);
 		}
 
         bzero(bbf, 60);
+        printf(" P3 sigo aki");
     }
 
     return 0;
@@ -113,13 +114,13 @@ int config_q(){
 		perror("error in P3 ftok");
 		exit(1);
 	}
-	if((serv_qid = msgget(serv_q_key, 0)) == -1){
+	if((serv_qid = msgget(serv_q_key, Q_PERMISSIONS)) == -1){
 		perror("error in P3 msget");
 		exit(1);
 	}
 
-	p3_message.message_type = 2;
-	p3_message.message_text.id = 2;
+	p3_message.message_type = 3;
+	p3_message.message_text.id = 3;
 
 	return serv_qid;
 }

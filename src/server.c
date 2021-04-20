@@ -8,13 +8,36 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 
 #include "../inc/liblist.h"
 #include "../inc/client_list.h"
 
+#define SERVER_KEY_PATHNAME "/tmp/mqueue_server_key"
+#define PROJECT_ID 'M'
+#define QUEUE_PERMISSIONS 0660
 #define TAM 256
 #define MAX_EVENTS 5000
+
+struct message_text {
+    int qid;
+    char buf [200];
+};
+
+struct message {
+    long message_type;
+    struct message_text message_text;
+};
+
+int config_socket(uint16_t port);
+void message_interpreter(char buffer[TAM], int clisockfd);
+void suscribe_client(char *producer, char* ip, int port, int clisockfd);
+void unsuscribe_client(char *producer, char* ip);
+char** parse_string(char* line);
+int config_queue();
+
 
 struct epoll_event ev, events_array[MAX_EVENTS];
 int listen_sock, client_sock, ready_fds, epoll_fd;
@@ -25,19 +48,13 @@ struct Node* p2 = NULL;
 struct Node* p3 = NULL;
 
 
-int config_socket(uint16_t port);
-void message_interpreter(char buffer[TAM], int clisockfd);
-void suscribe_client(char *producer, char* ip, int port, int clisockfd);
-void unsuscribe_client(char *producer, char* ip);
-char** parse_string(char* line);
-
-
 int main( int argc, char *argv[] ) {
-	int serv_sock_fd, ctrl_write, ctrl_read;
+	int serv_sock_fd, ctrl_write, ctrl_read, qid;
 	socklen_t clilen;
 	char buffer[TAM];
 	uint16_t port;
 	struct sockaddr_in cli_addr;
+	struct message message;
 
 
 	if (argc < 2) {
@@ -45,6 +62,10 @@ int main( int argc, char *argv[] ) {
 		exit(EXIT_FAILURE);
 	}
 	port = (uint16_t) atoi(argv[1]);
+
+	//queue configuration
+	qid = config_queue();
+	printf("server qid = %d\n\n", qid);
 
 	//socket configuration
 	serv_sock_fd = config_socket(port);
@@ -86,7 +107,7 @@ int main( int argc, char *argv[] ) {
             	}  
 				//--------------test------------------------
 				char *client_ip = inet_ntoa(cli_addr.sin_addr);
-				printf(" client [%d] ip: %s\n", client_sock, client_ip);
+				printf(" client [%d] ip: %s arrived\n", client_sock, client_ip);
 				//------------------------------------------
 
 				ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
@@ -120,11 +141,7 @@ int main( int argc, char *argv[] ) {
 						exit(EXIT_FAILURE);
 					}
 
-					//parser func & interpreter
 					message_interpreter(buffer, events_array[i].data.fd);
-
-
-
 				}
 				else if(events_array[i].events & EPOLLOUT){
 
@@ -133,9 +150,19 @@ int main( int argc, char *argv[] ) {
 					ctrl_write = (int) write(events_array[i].data.fd, buf, TAM);
 				}
 			}
-
-	
 		}
+
+		//queue checking
+		//for(int p = 1; p < 4; p++){
+			int p = 3;
+			if (msgrcv (qid, &message, sizeof (struct message_text), p, IPC_NOWAIT) == -1) {
+
+			}else{
+				printf ("Server: PRODUCERS MESSAGE RECEIVED \n");
+				//int length = strlen (message.message_text.buf);
+				printf("producer [%d] msg = %s\n", p, message.message_text.buf);
+			}
+		//}
 	}
 
 	return 0; 
@@ -153,7 +180,7 @@ int config_socket(uint16_t port){
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = inet_addr("192.168.100.7");//INADDR_ANY;
 	serv_addr.sin_port = htons(port);
-	printf("server: server address = %d\n", serv_addr.sin_addr.s_addr);
+	printf("server address = %s\n", inet_ntoa(serv_addr.sin_addr));
 
 	if (bind(serv_sock_fd, (struct sockaddr *) &serv_addr, sizeof( serv_addr )) < 0 ) {
 		perror("Server: error in binding fd with address");
@@ -189,17 +216,21 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 		if((strncmp(commands[1], "add", 3) == 0)){
 	
 			if(is_in_list(single_clients, commands[2])){
-		
 				suscribe_client(commands[4], commands[2], (int)strtol(commands[3],(char **)NULL, 10), clisockfd);
 			}
 			else{
 				printf("Client doesn't exist. Please try again.\n");
 			}
 		}
-		else if((strncmp(token, "delete", 6) == 0)){
-			//pop
+		else if((strncmp(commands[1], "delete", 6) == 0)){
+			if(is_in_list(single_clients, commands[2])){
+				unsuscribe_client(commands[4], commands[2]);
+			}
+			else{
+				printf("Client doesn't exist. Please try again.\n");
+			}
 		}
-		else if((strncmp(token, "log", 6) == 0)){
+		else if((strncmp(commands[1], "log", 3) == 0)){
 			//still dont know
 		}
 
@@ -259,9 +290,34 @@ char** parse_string(char* line){
     arr[i]=NULL;
     arr[i-1][strlen(arr[i-1])-1]= '\0';
     free(token);
+
+	// int x = 0;
+	// while(arr[x] != NULL){
+	// 	printf("commands[%d] = %s|",x, arr[x]);
+	// 	x++;
+	// }
+	printf("\n");
     //free(line);
      
     return arr;
 }
 
+int config_queue(){
+
+    key_t msg_queue_key;
+    int qid;
+
+	if ((msg_queue_key = ftok (SERVER_KEY_PATHNAME, PROJECT_ID)) == -1) {
+        perror ("ftok");
+        exit (1);
+    }
+
+    if ((qid = msgget (msg_queue_key, IPC_CREAT | QUEUE_PERMISSIONS)) == -1) {
+        perror ("msgget");
+        exit (1);
+    }
+
+	return qid;
+
+}
 

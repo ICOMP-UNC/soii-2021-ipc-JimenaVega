@@ -36,17 +36,18 @@ int main(){
         sleep(SLEEP_TIME);
 		strcpy(p2_message.message_text.buf, generate_msg());
 
-		printf("freemem = %s\n",p2_message.message_text.buf);
+		printf("P2: freemem = %s\n",p2_message.message_text.buf);
 
 		int len = (int) strlen(p2_message.message_text.buf);
 		if(p2_message.message_text.buf[len-1] == '\n'){
 			p2_message.message_text.buf[len-1] = '\0';
 		}
 
-        if(msgsnd(serv_qid, &p2_message, sizeof(struct message_text),0) == -1){
+        if(msgsnd(serv_qid, &p2_message, sizeof(struct message_text),IPC_NOWAIT) == -1){
 			perror("P2: msgsnd error");
 			exit(EXIT_FAILURE);
 		}
+    
 
     }
 
@@ -89,7 +90,7 @@ int config_q(){
 		perror("error in P2 ftok");
 		exit(1);
 	}
-	if((serv_qid = msgget(serv_q_key, 0)) == -1){
+	if((serv_qid = msgget(serv_q_key, Q_PERMISSIONS)) == -1){
 		perror("error in P2 msget");
 		exit(1);
 	}

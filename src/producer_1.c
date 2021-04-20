@@ -11,7 +11,7 @@
 #define SLEEP_TIME 1
 #define KEY_PATHNAME "/tmp/mqueue_server_key"
 #define PROJECT_ID 'M'
-#define Q_PERMISSIONS 0660
+#define Q_PERMISSIONS 0666
 //Un productor que envía un mensaje 
 //random con una tasa de X/segundos.
 
@@ -35,21 +35,23 @@ int main(){
 
 	while(1){
 		sleep(SLEEP_TIME);
+		
 
 		char buf [20];
         sprintf (buf, " %d", rand());
         strcpy (p1_message.message_text.buf, buf);
 		printf("P1:%s\n",p1_message.message_text.buf);
 
-		if(msgsnd(serv_qid, &p1_message, sizeof(struct message_text),0) == -1){
+		if(msgsnd(serv_qid, &p1_message, sizeof(struct message_text),IPC_NOWAIT) == -1){
 			perror("P1: msgsnd error");
 			exit(EXIT_FAILURE);
 		}
 
         bzero(buf, 20);
-
+		printf(" P1 sigo aki");
 	}
 
+	printf("soy P1 y me sali \n");
 	return 0;
 }
 
@@ -62,7 +64,7 @@ int config_q(){
 		perror("error in P1 ftok");
 		exit(1);
 	}
-	if((serv_qid = msgget(serv_q_key, 0)) == -1){
+	if((serv_qid = msgget(serv_q_key, Q_PERMISSIONS)) == -1){
 		perror("error in P1 msget");
 		exit(1);
 	}

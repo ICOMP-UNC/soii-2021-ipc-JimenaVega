@@ -17,7 +17,7 @@
 
 #define SERVER_KEY_PATHNAME "/tmp/mqueue_server_key"
 #define PROJECT_ID 'M'
-#define QUEUE_PERMISSIONS 0660
+#define QUEUE_PERMISSIONS 0666
 
 struct message_text {
     int qid;
@@ -49,10 +49,9 @@ int main (int argc, char **argv)
 
     while (1){
         // read an incoming message
-        if (msgrcv (qid, &message, sizeof (struct message_text), 0, 0) == -1) {
-            perror ("msgrcv");
-            exit (1);
-        }
+        if (msgrcv (qid, &message, sizeof (struct message_text), 0, IPC_NOWAIT) == -1) {
+  
+        }else{
 
         printf ("Server: message received: ");
 
@@ -66,6 +65,6 @@ int main (int argc, char **argv)
 
         // int client_qid = message.message_text.qid;
         // message.message_text.qid = qid;
-
+        }
     }
 }
