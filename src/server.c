@@ -28,6 +28,8 @@ struct Node* p3 = NULL;
 int config_socket(uint16_t port);
 void message_interpreter(char buffer[TAM], int clisockfd);
 void suscribe_client(char *producer, char* ip, int port, int clisockfd);
+void unsuscribe_client(char *producer, char* ip);
+char** parse_string(char* line);
 
 
 int main( int argc, char *argv[] ) {
@@ -165,54 +167,30 @@ int config_socket(uint16_t port){
 
 }
 
+/*********************************************************************//**
+* @brief        
+* @param[in]   
+
+* @return        None
+**********************************************************************/
 void message_interpreter(char buffer[TAM], int clisockfd){
 
-	int aux_port = 0;
-	char* aux_ip = "";
-	char* token = strtok(buffer, " ");
-	char* producer = "";
+	char** commands = parse_string(buffer);
 
-	if((strncmp(token, "ACK", 3) == 0)){
+	if((strncmp(commands[0], "ACK", 3) == 0)){
 	
-		for(int i=0; i<2; i++ ){
-        
-			token = strtok(NULL," ");
-			if(i == 1){
-				aux_port = (int) strtol(token, (char **)NULL, 10);
-			}
-			else{
-				aux_ip = strdup(token);
-			}
-		}
-		
-		if(!is_in_list(single_clients,aux_ip)){
-			push(&single_clients, aux_ip, aux_port, clisockfd);
+		if(!is_in_list(single_clients, commands[1])){
+			push(&single_clients, commands[1], (int)strtol(commands[2],(char **)NULL, 10) ,clisockfd);
 		}
 		//print_clients_list(single_clients);
     }
-	else if(strncmp(token, "CLI", 3) == 0){
+	else if(strncmp(commands[0], "CLI", 3) == 0){
 
-		//parse, trverse client list and put into marriedclient list
-		token = strtok(NULL," ");
-		if((strncmp(token, "add", 3) == 0)){
-
-			for(int i=0; i<3; i++){
-        
-				token = strtok(NULL," ");
-				if(i == 1){
-					aux_port = (int) strtol(token, (char **)NULL, 10);
-				}
-				else if(i == 0){
-					aux_ip = strdup(token);
-				}
-				else{
-					producer = strdup(token);
-				}
-			}
+		if((strncmp(commands[1], "add", 3) == 0)){
 	
-			if(is_in_list(single_clients, aux_ip)){
+			if(is_in_list(single_clients, commands[2])){
 		
-				suscribe_client(producer, aux_ip, aux_port, clisockfd);
+				suscribe_client(commands[4], commands[2], (int)strtol(commands[3],(char **)NULL, 10), clisockfd);
 			}
 			else{
 				printf("Client doesn't exist. Please try again.\n");
@@ -231,7 +209,6 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 void suscribe_client(char *producer, char* ip, int port, int clisockfd){
 
 	if(strncmp(producer, "P1", 2) == 0){
-		printf("***Es un P1 entonces pusheo\n");
 		push(&p1, ip, port, clisockfd);
 		print_clients_list(p1);
 	}
@@ -246,5 +223,45 @@ void suscribe_client(char *producer, char* ip, int port, int clisockfd){
 	delete_node(&single_clients, ip);
 }
 
+void unsuscribe_client(char *producer, char* ip){
+
+	if(strncmp(producer, "P1", 2) == 0){
+		delete_node(&p1, ip);
+	}
+	else if(strncmp(producer, "P2", 2) == 0){
+		delete_node(&p2, ip);
+	}
+	else if(strncmp(producer, "P3", 2) == 0){
+		delete_node(&p3, ip);
+	}
+}
+
+char** parse_string(char* line){
+    
+    char *token;
+    char **arr = NULL;
+    size_t i = 0;
+    
+    token = strtok(line, " ");
+    arr   = (char**) malloc(sizeof(char*));
+
+    do{
+       
+        *(arr+i) = (char*) calloc (strlen(token+1), sizeof(char));
+        arr      = (char**) realloc(arr,  ((sizeof(char*)) *(2+i)));
+        strcpy(arr[i],token);
+        token = strtok(NULL, " ");
+    
+        i++;
+    }
+    while(token != NULL);
+
+    arr[i]=NULL;
+    arr[i-1][strlen(arr[i-1])-1]= '\0';
+    free(token);
+    //free(line);
+     
+    return arr;
+}
 
 
