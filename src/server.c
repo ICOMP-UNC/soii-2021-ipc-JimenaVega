@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <openssl/md5.h>
 
 
 #include "../inc/liblist.h"
@@ -37,6 +38,8 @@ void suscribe_client(char *producer, char* ip, int port, int clisockfd);
 void unsuscribe_client(char *producer, char* ip);
 void send_to_suscribers(int producer, char msg[TAM]);
 char** parse_string(char* line);
+char* wrap_in_frame(char msg[TAM]);
+void get_md5hash(char *str, unsigned char digest[MD5_DIGEST_LENGTH]);
 int config_queue();
 
 
@@ -158,6 +161,9 @@ int main( int argc, char *argv[] ) {
 
 				sprintf (msg, "2- msg: %s ", message.message_text.buf);
 				printf("MSG = %s\n", msg);
+
+				/*wrap_in_frame(msg)*/
+				
 			
 				send_to_suscribers(p, msg);
 			}
@@ -213,9 +219,9 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 			printf("...SINGLE LIST....\n");
 			print_clients_list(single_clients);
 		}
-		else{
-			printf("There's already a client with that IP. Please try with other.\n");
-		}
+		// else{
+		// 	printf("There's already a client with that IP. Please try with other.\n");
+		// } 
 		
     }
 	else if(strncmp(commands[0], "CLI", 3) == 0){
@@ -342,14 +348,15 @@ int config_queue(){
 
 void send_to_suscribers(int producer, char msg[TAM]){
 
-/***************WOKING********************/
-	
+
 
 	if(producer == 1){
 		
 		if(!is_empty(p1)){
+			
 			printf("Sending to suscribers of p1...\n");
-			send_in_list(p1, msg);
+			char *wrapped  = wrap_in_frame(msg);
+			send_in_list(p1, wrapped);
 			print_clients_list(p1);
 
 		}
@@ -362,7 +369,8 @@ void send_to_suscribers(int producer, char msg[TAM]){
 		
 		if(!is_empty(p2)){
 			printf("Sending to suscribers of p2...\n");
-			send_in_list(p2, msg);
+			char *wrapped  = wrap_in_frame(msg);
+			send_in_list(p2, wrapped);
 			printf("\n---printing p2----\n");
 			print_clients_list(p2);
 
@@ -376,7 +384,8 @@ void send_to_suscribers(int producer, char msg[TAM]){
 	else if(producer == 3){
 		
 		if(!is_empty(p3)){
-			send_in_list(p3, msg);
+			char *wrapped  = wrap_in_frame(msg);
+			send_in_list(p3, wrapped);
 			printf("\n---printing p3 list----\n");
 			print_clients_list(p3);
 
@@ -386,4 +395,31 @@ void send_to_suscribers(int producer, char msg[TAM]){
 			return;
 		}
 	}
+}
+
+char* wrap_in_frame(char msg[TAM]){
+
+	printf("\n----------WRAP_IN_FRAME---\n");
+	char *result = malloc(64);
+    char new_buf[(MD5_DIGEST_LENGTH*2)+1];
+    unsigned char digest2[MD5_DIGEST_LENGTH];
+
+    get_md5hash(msg, digest2);
+
+    for (int i = 0, j = 0; i < MD5_DIGEST_LENGTH; i++, j+=2){
+		sprintf(new_buf+j, "%02x", digest2[i]);
+	}
+
+	//digest2[MD5_DIGEST_LENGTH*2]=0;
+	sprintf(result,"server %s MD5:%s", msg, new_buf);
+	printf("WRAP = %s\n", result);
+
+	return result;
+}
+
+void get_md5hash(char *str, unsigned char digest[MD5_DIGEST_LENGTH]) {
+    MD5_CTX ctx;
+    MD5_Init(&ctx);
+    MD5_Update(&ctx, str, strlen(str));
+    MD5_Final(digest, &ctx);
 }

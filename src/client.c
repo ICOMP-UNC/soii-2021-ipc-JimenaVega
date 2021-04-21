@@ -7,7 +7,7 @@
 #include <netdb.h> 
 #include <unistd.h>
 #include <arpa/inet.h>
-
+#include <openssl/md5.h>
 
 #define TAM 256
 #define h_addr h_addr_list[0] //ver porque no esta tomando la de netdb.h
