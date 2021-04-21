@@ -48,10 +48,9 @@ int main(){
 		}
 
         bzero(buf, 20);
-		printf(" P1 sigo aki");
+
 	}
 
-	printf("soy P1 y me sali \n");
 	return 0;
 }
 

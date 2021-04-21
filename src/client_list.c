@@ -55,7 +55,7 @@ int is_in_list(struct Node* node, char* key){
  
 
 void print_clients_list(struct Node* node){
-    printf("\nprinting list...\n");
+    //printf("\n---printed list----\n");
     while (node != NULL) {
         printf("\nIP: %s ", node->ip);
         printf("port: %d \n", node->port);
@@ -64,4 +64,17 @@ void print_clients_list(struct Node* node){
     }
     printf("---------------\n");
 }
- 
+
+int is_empty(struct Node* node){
+    
+    
+    int count = 0;
+    while(node != NULL){
+        count++;
+        node = node->next;
+    }
+    if(count > 0){
+        return 0;
+    }
+    return 1;
+}

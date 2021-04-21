@@ -35,6 +35,7 @@ int config_socket(uint16_t port);
 void message_interpreter(char buffer[TAM], int clisockfd);
 void suscribe_client(char *producer, char* ip, int port, int clisockfd);
 void unsuscribe_client(char *producer, char* ip);
+void send_to_suscribers(int producer, char msg[TAM]);
 char** parse_string(char* line);
 int config_queue();
 
@@ -55,6 +56,8 @@ int main( int argc, char *argv[] ) {
 	uint16_t port;
 	struct sockaddr_in cli_addr;
 	struct message message;
+
+	int test_fd = 0; /*BORRAR*/
 
 
 	if (argc < 2) {
@@ -135,6 +138,7 @@ int main( int argc, char *argv[] ) {
 
 					if(ctrl_read > 0){
 						printf("client [%d] : %s\n", events_array[i].data.fd, buffer);
+						test_fd = events_array[i].data.fd;
 					}
 					else if(ctrl_read < 0){
 						perror("Error reading");
@@ -143,24 +147,31 @@ int main( int argc, char *argv[] ) {
 
 					message_interpreter(buffer, events_array[i].data.fd);
 				}
-				else if(events_array[i].events & EPOLLOUT){
-
-					char buf [TAM];
-        			sprintf (buf, "2- client: %d mensaje regular", events_array[i].data.fd);
-					ctrl_write = (int) write(events_array[i].data.fd, buf, TAM);
-				}
+				//else if(events_array[i].events & EPOLLOUT){
+	
+				//}
 			}
 		}
-
+		/***************WOKING********************/
 		//queue checking
-		//for(int p = 1; p < 4; p++){
-			int p = 3;
+		char msg [TAM];
+//for(int p = 1; p < 4; p++){
+			int p = 1;
 			if (msgrcv (qid, &message, sizeof (struct message_text), p, IPC_NOWAIT) == -1) {
 
 			}else{
-				printf ("Server: PRODUCERS MESSAGE RECEIVED \n");
-				//int length = strlen (message.message_text.buf);
-				printf("producer [%d] msg = %s\n", p, message.message_text.buf);
+				sprintf (msg, "2- msg: %s ", message.message_text.buf);
+				printf("MSG = %s\n", msg);
+			
+				/*printf("---------test----------\n");
+				printf("p1 list is empty = %d\n", is_empty(p1));
+				print_clients_list(p1);
+				send_to_suscribers(p, msg);*/
+				if(write(test_fd, msg, TAM) < 0){
+					perror("server: could't write message to suscriber\n");
+					exit(EXIT_FAILURE);
+				}
+				
 			}
 		//}
 	}
@@ -208,15 +219,21 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 	
 		if(!is_in_list(single_clients, commands[1])){
 			push(&single_clients, commands[1], (int)strtol(commands[2],(char **)NULL, 10) ,clisockfd);
+			printf("...SINGLE LIS....T\n");
+			print_clients_list(single_clients);
 		}
-		//print_clients_list(single_clients);
+		
     }
 	else if(strncmp(commands[0], "CLI", 3) == 0){
 
 		if((strncmp(commands[1], "add", 3) == 0)){
 	
 			if(is_in_list(single_clients, commands[2])){
-				suscribe_client(commands[4], commands[2], (int)strtol(commands[3],(char **)NULL, 10), clisockfd);
+				printf("suscribi P[%s] con ip[%s]\n",commands[4], commands[2]);
+				suscribe_client(commands[4], commands[2],
+						 ((int)strtol(commands[3],(char **)NULL, 10)), clisockfd);
+				//se borra de la lista de solteros y se la agrega a la lista con productores
+				delete_node(&single_clients, commands[2]);
 			}
 			else{
 				printf("Client doesn't exist. Please try again.\n");
@@ -240,6 +257,7 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 void suscribe_client(char *producer, char* ip, int port, int clisockfd){
 
 	if(strncmp(producer, "P1", 2) == 0){
+		printf("I suscribed %s into P1 list\n", ip);
 		push(&p1, ip, port, clisockfd);
 		print_clients_list(p1);
 	}
@@ -257,6 +275,7 @@ void suscribe_client(char *producer, char* ip, int port, int clisockfd){
 void unsuscribe_client(char *producer, char* ip){
 
 	if(strncmp(producer, "P1", 2) == 0){
+		printf("*****************borre al cliente en P1\n");
 		delete_node(&p1, ip);
 	}
 	else if(strncmp(producer, "P2", 2) == 0){
@@ -321,3 +340,65 @@ int config_queue(){
 
 }
 
+void send_to_suscribers(int producer, char msg[TAM] ){
+
+/***************WOKING********************/
+	
+
+	if(producer == 1){
+		
+		if(!is_empty(p1)){
+			printf("Sending to suscribers of p1...\n");
+			while(p1 != NULL){
+
+				if(write(p1->cli_sock_fd, msg, TAM) < 0){
+					perror("server: could't write message to suscriber\n");
+					exit(EXIT_FAILURE);
+				}
+				printf("Le escribi a p1->ip = %s fd = %d\n",p1->ip, p1->cli_sock_fd);
+				p1 = p1->next;
+			}
+		}
+		else{
+			printf("There are no suscribers for producer P1\n");
+			return;
+		}
+	}
+	else if(producer == 2){
+		
+		if(!is_empty(p2)){
+			printf("Sending to suscribers of p2...\n");
+			while(p2 != NULL){
+
+				if(write(p2->cli_sock_fd, msg, TAM) < 0){
+					perror("server: could't write message to suscriber\n");
+					exit(EXIT_FAILURE);
+				}
+				p2 = p2->next;
+			}
+		}
+		else{
+			printf("There are no suscribers for producer P2\n");
+			return;
+		}
+
+	}
+	else if(producer == 3){
+		
+		if(!is_empty(p3)){
+			printf("Sending to suscribers of p3...\n");
+			while(p3 != NULL){
+
+				if(write(p3->cli_sock_fd, msg, TAM) < 0){
+					perror("server: could't write message to suscriber\n");
+					exit(EXIT_FAILURE);
+				}
+				p3 = p3->next;
+			}
+		}
+		else{
+			printf("There are no suscribers for producer P3\n");
+			return;
+		}
+	}
+}

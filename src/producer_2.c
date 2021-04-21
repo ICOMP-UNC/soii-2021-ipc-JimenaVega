@@ -7,7 +7,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
-#define SLEEP_TIME 2
+#define SLEEP_TIME 4
 #define KEY_PATHNAME "/tmp/mqueue_server_key"
 #define PROJECT_ID 'M'
 #define Q_PERMISSIONS 0660
