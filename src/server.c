@@ -155,7 +155,7 @@ int main( int argc, char *argv[] ) {
 		/***************WOKING********************/
 		//queue checking
 		char msg [TAM];
-//for(int p = 1; p < 4; p++){
+		//for(int p = 1; p < 4; p++){
 			int p = 1;
 			if (msgrcv (qid, &message, sizeof (struct message_text), p, IPC_NOWAIT) == -1) {
 
@@ -163,10 +163,14 @@ int main( int argc, char *argv[] ) {
 				sprintf (msg, "2- msg: %s ", message.message_text.buf);
 				printf("MSG = %s\n", msg);
 			
-				/*printf("---------test----------\n");
-				printf("p1 list is empty = %d\n", is_empty(p1));
+				printf("---------test----------\n");
+				printf("p1 list is empty = %d\n ", is_empty(p1));
+				printf("1- Printeando lista p1 \n");
 				print_clients_list(p1);
-				send_to_suscribers(p, msg);*/
+				send_to_suscribers(p, msg);
+				printf("2- Printeando lista p1\n");
+				print_clients_list(p1);//aca ya no andan
+				printf("---------end-test----------\n");
 				if(write(test_fd, msg, TAM) < 0){
 					perror("server: could't write message to suscriber\n");
 					exit(EXIT_FAILURE);
@@ -340,7 +344,7 @@ int config_queue(){
 
 }
 
-void send_to_suscribers(int producer, char msg[TAM] ){
+void send_to_suscribers(int producer, char msg[TAM]){
 
 /***************WOKING********************/
 	
@@ -349,15 +353,7 @@ void send_to_suscribers(int producer, char msg[TAM] ){
 		
 		if(!is_empty(p1)){
 			printf("Sending to suscribers of p1...\n");
-			while(p1 != NULL){
-
-				if(write(p1->cli_sock_fd, msg, TAM) < 0){
-					perror("server: could't write message to suscriber\n");
-					exit(EXIT_FAILURE);
-				}
-				printf("Le escribi a p1->ip = %s fd = %d\n",p1->ip, p1->cli_sock_fd);
-				p1 = p1->next;
-			}
+			send_in_list(p1, msg);
 		}
 		else{
 			printf("There are no suscribers for producer P1\n");
@@ -368,14 +364,7 @@ void send_to_suscribers(int producer, char msg[TAM] ){
 		
 		if(!is_empty(p2)){
 			printf("Sending to suscribers of p2...\n");
-			while(p2 != NULL){
-
-				if(write(p2->cli_sock_fd, msg, TAM) < 0){
-					perror("server: could't write message to suscriber\n");
-					exit(EXIT_FAILURE);
-				}
-				p2 = p2->next;
-			}
+			send_in_list(p2, msg);
 		}
 		else{
 			printf("There are no suscribers for producer P2\n");
@@ -386,15 +375,7 @@ void send_to_suscribers(int producer, char msg[TAM] ){
 	else if(producer == 3){
 		
 		if(!is_empty(p3)){
-			printf("Sending to suscribers of p3...\n");
-			while(p3 != NULL){
-
-				if(write(p3->cli_sock_fd, msg, TAM) < 0){
-					perror("server: could't write message to suscriber\n");
-					exit(EXIT_FAILURE);
-				}
-				p3 = p3->next;
-			}
+			send_in_list(p3, msg);
 		}
 		else{
 			printf("There are no suscribers for producer P3\n");

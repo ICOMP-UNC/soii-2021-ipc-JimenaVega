@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "../inc/client_list.h" 
+#define TAM 256
 
 void push(struct Node** head_ref, char* ip, int port, int cli_sock_fd){
 
@@ -77,4 +79,17 @@ int is_empty(struct Node* node){
         return 0;
     }
     return 1;
+}
+
+void send_in_list(struct Node* p, char msg[TAM]){
+
+    while(p != NULL){
+
+        if(write(p->cli_sock_fd, msg, TAM) < 0){
+            perror("server: could't write message to suscriber\n");
+            exit(EXIT_FAILURE);
+        }
+        printf("Le escribi a p1->ip = %s fd = %d\n",p->ip, p->cli_sock_fd);
+        p = p->next;
+    }
 }
