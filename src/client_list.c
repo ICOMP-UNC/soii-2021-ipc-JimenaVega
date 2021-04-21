@@ -57,11 +57,11 @@ int is_in_list(struct Node* node, char* key){
  
 
 void print_clients_list(struct Node* node){
-    //printf("\n---printed list----\n");
+
     while (node != NULL) {
-        printf("\nIP: %s ", node->ip);
-        printf("port: %d \n", node->port);
-        printf("socket: %d \n", node->cli_sock_fd);
+        printf("\nIP: %s\t", node->ip);
+        printf("port: %d\t", node->port);
+        printf("socket: %d\n", node->cli_sock_fd);
         node = node->next;
     }
     printf("---------------\n");
@@ -92,4 +92,18 @@ void send_in_list(struct Node* p, char msg[TAM]){
         printf("Le escribi a p1->ip = %s fd = %d\n",p->ip, p->cli_sock_fd);
         p = p->next;
     }
+}
+
+int get_client_fd(struct Node* node, char* ip){
+
+    while(node != NULL){
+
+        if(strcmp(node->ip,ip) == 0){
+
+            return node->cli_sock_fd;
+        }
+        node = node->next;
+    }
+
+    return 0;
 }

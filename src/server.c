@@ -57,8 +57,6 @@ int main( int argc, char *argv[] ) {
 	struct sockaddr_in cli_addr;
 	struct message message;
 
-	int test_fd = 0; /*BORRAR*/
-
 
 	if (argc < 2) {
     	fprintf(stderr, "You should write: %s <port>\n", argv[0]);
@@ -138,7 +136,7 @@ int main( int argc, char *argv[] ) {
 
 					if(ctrl_read > 0){
 						printf("client [%d] : %s\n", events_array[i].data.fd, buffer);
-						test_fd = events_array[i].data.fd;
+						
 					}
 					else if(ctrl_read < 0){
 						perror("Error reading");
@@ -147,37 +145,23 @@ int main( int argc, char *argv[] ) {
 
 					message_interpreter(buffer, events_array[i].data.fd);
 				}
-				//else if(events_array[i].events & EPOLLOUT){
-	
-				//}
 			}
 		}
 		/***************WOKING********************/
 		//queue checking
 		char msg [TAM];
-		//for(int p = 1; p < 4; p++){
-			int p = 1;
+		for(int p = 1; p < 4; p++){
+			//int p = 1;
 			if (msgrcv (qid, &message, sizeof (struct message_text), p, IPC_NOWAIT) == -1) {
 
 			}else{
+
 				sprintf (msg, "2- msg: %s ", message.message_text.buf);
 				printf("MSG = %s\n", msg);
 			
-				printf("---------test----------\n");
-				printf("p1 list is empty = %d\n ", is_empty(p1));
-				printf("1- Printeando lista p1 \n");
-				print_clients_list(p1);
 				send_to_suscribers(p, msg);
-				printf("2- Printeando lista p1\n");
-				print_clients_list(p1);//aca ya no andan
-				printf("---------end-test----------\n");
-				if(write(test_fd, msg, TAM) < 0){
-					perror("server: could't write message to suscriber\n");
-					exit(EXIT_FAILURE);
-				}
-				
 			}
-		//}
+		}
 	}
 
 	return 0; 
@@ -222,9 +206,15 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 	if((strncmp(commands[0], "ACK", 3) == 0)){
 	
 		if(!is_in_list(single_clients, commands[1])){
-			push(&single_clients, commands[1], (int)strtol(commands[2],(char **)NULL, 10) ,clisockfd);
-			printf("...SINGLE LIS....T\n");
+
+			push(&single_clients, commands[1], 
+				((int)strtol(commands[2],(char **)NULL, 10)) ,clisockfd);
+
+			printf("...SINGLE LIST....\n");
 			print_clients_list(single_clients);
+		}
+		else{
+			printf("There's already a client with that IP. Please try with other.\n");
 		}
 		
     }
@@ -233,9 +223,14 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 		if((strncmp(commands[1], "add", 3) == 0)){
 	
 			if(is_in_list(single_clients, commands[2])){
-				printf("suscribi P[%s] con ip[%s]\n",commands[4], commands[2]);
+
+				char* aux_ip = strdup(commands[2]);
+				int fd = get_client_fd(single_clients, aux_ip);
+				printf("suscribi P%s con ip[%s] y fd[%d]\n",commands[4], commands[2],fd);
+
+				
 				suscribe_client(commands[4], commands[2],
-						 ((int)strtol(commands[3],(char **)NULL, 10)), clisockfd);
+						 ((int)strtol(commands[3],(char **)NULL, 10)), fd);
 				//se borra de la lista de solteros y se la agrega a la lista con productores
 				delete_node(&single_clients, commands[2]);
 			}
@@ -256,6 +251,7 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 		}
 
 	}
+
 }
 
 void suscribe_client(char *producer, char* ip, int port, int clisockfd){
@@ -354,6 +350,8 @@ void send_to_suscribers(int producer, char msg[TAM]){
 		if(!is_empty(p1)){
 			printf("Sending to suscribers of p1...\n");
 			send_in_list(p1, msg);
+			print_clients_list(p1);
+
 		}
 		else{
 			printf("There are no suscribers for producer P1\n");
@@ -365,6 +363,9 @@ void send_to_suscribers(int producer, char msg[TAM]){
 		if(!is_empty(p2)){
 			printf("Sending to suscribers of p2...\n");
 			send_in_list(p2, msg);
+			printf("\n---printing p2----\n");
+			print_clients_list(p2);
+
 		}
 		else{
 			printf("There are no suscribers for producer P2\n");
@@ -376,6 +377,9 @@ void send_to_suscribers(int producer, char msg[TAM]){
 		
 		if(!is_empty(p3)){
 			send_in_list(p3, msg);
+			printf("\n---printing p3 list----\n");
+			print_clients_list(p3);
+
 		}
 		else{
 			printf("There are no suscribers for producer P3\n");
