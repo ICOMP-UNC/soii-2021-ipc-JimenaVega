@@ -10,8 +10,12 @@
 #include <openssl/md5.h>
 
 #define TAM 256
-#define h_addr h_addr_list[0] //ver porque no esta tomando la de netdb.h
+#define h_addr h_addr_list[0] 
 
+
+int translate_hash(char buffer[TAM]);
+char* get_hash(char* msg);
+void compute_md5(char *str, unsigned char digest[MD5_DIGEST_LENGTH]);
 
 //argv[1] = <my-ip>
 //argv[2] = <server-ip>
@@ -53,24 +57,79 @@ int main( int argc, char *argv[] ){
 
 	while(1) {
 
-		//I need checksum control here
 		n_read = read(sockfd, &buffer, TAM);
-		printf("Server msg for client: %s\n", buffer);
 
 		if(n_read < 0){
 			perror("Client: invalid read");
 			exit(EXIT_FAILURE);
 		}
-		//formato = ACK <my-ip> <port>
-		char to_send [TAM];
-        sprintf (to_send, "ACK %s %s", argv[1], argv[3]);
-		printf("client to_send = %s\n", to_send);
-		n_write = write(sockfd,to_send, TAM);
-		if(n_write == -1){
-			perror("Client: invalid write.");
-			exit(0);
+		else if(n_read > 0){
+			
+			printf("R: %s\n", buffer);
+
+			if(translate_hash(buffer)){
+				//formato = ACK <my-ip> <port>
+				char to_send [TAM];
+				sprintf (to_send, "ACK %s %s", argv[1], argv[3]);
+				printf("S: %s\n", to_send);
+
+				n_write = write(sockfd,to_send, TAM);
+
+				if(n_write == -1){
+					perror("Client: invalid write.");
+					exit(EXIT_FAILURE);
+				}
+			}
+			else{
+				printf("Error. Unrecognized hash\n");
+			}
 		}
-		
+
 	}
 	return 0;
 } 
+
+int translate_hash(char buffer[TAM]){
+
+	//both come with the message from server
+	char* original_msg;
+	char* original_hash = strtok(buffer, " ");
+
+	original_hash = strtok(NULL, " ");
+	original_msg = strdup(original_hash);
+
+	original_hash = strtok(NULL, " ");
+
+	//the one that I compute to compare
+	char* hash = get_hash(original_msg);
+
+	if(strncmp(hash, original_hash, 32) == 0){
+        return 1;
+    }
+    return 0;
+}
+
+char* get_hash(char* msg){
+
+	char* result = malloc(33 * sizeof(char));
+	char new_buff[(MD5_DIGEST_LENGTH * 2) + 1];
+	unsigned char digest[MD5_DIGEST_LENGTH];
+
+	compute_md5(msg, digest);
+
+	for(int i = 0, j = 0; i < MD5_DIGEST_LENGTH; i++, j+=2){
+		sprintf(new_buff+j, "%02x", digest[i]);
+	}
+
+	sprintf(result, "%s", new_buff);
+
+	return result;
+}
+
+void compute_md5(char *str, unsigned char digest[MD5_DIGEST_LENGTH]){
+
+    MD5_CTX ctx;
+    MD5_Init(&ctx);
+    MD5_Update(&ctx, str, strlen(str));
+    MD5_Final(digest, &ctx);
+}

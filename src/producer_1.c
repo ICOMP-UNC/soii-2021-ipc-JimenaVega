@@ -38,7 +38,7 @@ int main(){
 		
 
 		char buf [20];
-        sprintf (buf, " %d", rand());
+        sprintf (buf, "%d", rand());
         strcpy (p1_message.message_text.buf, buf);
 		printf("P1:%s\n",p1_message.message_text.buf);
 

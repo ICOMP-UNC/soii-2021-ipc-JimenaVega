@@ -69,7 +69,7 @@ int main( int argc, char *argv[] ) {
 
 	//queue configuration
 	qid = config_queue();
-	printf("server qid = %d\n\n", qid);
+	printf("server QID : %d\n", qid);
 
 	//socket configuration
 	serv_sock_fd = config_socket(port);
@@ -109,10 +109,9 @@ int main( int argc, char *argv[] ) {
 					perror("accept");
 					exit(EXIT_FAILURE);
             	}  
-				//--------------test------------------------
-				char *client_ip = inet_ntoa(cli_addr.sin_addr);
-				printf(" client [%d] ip: %s arrived\n", client_sock, client_ip);
-				//------------------------------------------
+				
+				printf(" client [%d] arrived\n", client_sock);
+				
 
 				ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
             	ev.data.fd = client_sock;
@@ -122,9 +121,14 @@ int main( int argc, char *argv[] ) {
 					perror("server: epoll_ctl error");
 					exit(EXIT_FAILURE);
            		}
-
+				/*************WORKING****************************/
 				printf("Envio el checksum a client %d\n", client_sock);
-				ctrl_write = (int) write(client_sock, "1- a ver si pasas this checksum",TAM);
+
+				char* checksum = wrap_in_frame("SA");
+				char wrapped[TAM];
+				sprintf(wrapped, "%s", checksum);
+				printf("wrapped = %s\n", wrapped);
+				ctrl_write = (int) write(client_sock, wrapped, TAM);
 
 				if(ctrl_write < 0){
 					perror("Error in writing client socket");
@@ -154,17 +158,13 @@ int main( int argc, char *argv[] ) {
 		//queue checking
 		char msg [TAM];
 		for(int p = 1; p < 4; p++){
-			//int p = 1;
+			
 			if (msgrcv (qid, &message, sizeof (struct message_text), p, IPC_NOWAIT) == -1) {
 
 			}else{
 
-				sprintf (msg, "2- msg: %s ", message.message_text.buf);
-				printf("MSG = %s\n", msg);
+				sprintf (msg, "%s", message.message_text.buf);
 
-				/*wrap_in_frame(msg)*/
-				
-			
 				send_to_suscribers(p, msg);
 			}
 		}
@@ -185,14 +185,15 @@ int config_socket(uint16_t port){
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = inet_addr("192.168.100.7");//INADDR_ANY;
 	serv_addr.sin_port = htons(port);
-	printf("server address = %s\n", inet_ntoa(serv_addr.sin_addr));
+	printf("server address : %s\n", inet_ntoa(serv_addr.sin_addr));
 
 	if (bind(serv_sock_fd, (struct sockaddr *) &serv_addr, sizeof( serv_addr )) < 0 ) {
 		perror("Server: error in binding fd with address");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
-	printf("Process: %d - available socket: %d\n", getpid(), ntohs(serv_addr.sin_port) );
+	printf("Process: %d - available socket: %d\n", getpid(), ntohs(serv_addr.sin_port));
+	printf("----------------------------------------------\n");
 	listen(serv_sock_fd, MAX_EVENTS);
 
 	return serv_sock_fd;
@@ -238,7 +239,7 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 				suscribe_client(commands[4], commands[2],
 						 ((int)strtol(commands[3],(char **)NULL, 10)), fd);
 				//se borra de la lista de solteros y se la agrega a la lista con productores
-				delete_node(&single_clients, commands[2]);
+				//delete_node(&single_clients, commands[2]);
 			}
 			else{
 				printf("Client doesn't exist. Please try again.\n");
@@ -275,7 +276,7 @@ void suscribe_client(char *producer, char* ip, int port, int clisockfd){
 		push(&p3, ip, port, clisockfd);
 		print_clients_list(p3);
 	}
-	delete_node(&single_clients, ip);
+	//delete_node(&single_clients, ip);
 }
 
 void unsuscribe_client(char *producer, char* ip){
@@ -348,8 +349,6 @@ int config_queue(){
 
 void send_to_suscribers(int producer, char msg[TAM]){
 
-
-
 	if(producer == 1){
 		
 		if(!is_empty(p1)){
@@ -399,7 +398,6 @@ void send_to_suscribers(int producer, char msg[TAM]){
 
 char* wrap_in_frame(char msg[TAM]){
 
-	printf("\n----------WRAP_IN_FRAME---\n");
 	char *result = malloc(64);
     char new_buf[(MD5_DIGEST_LENGTH*2)+1];
     unsigned char digest2[MD5_DIGEST_LENGTH];
@@ -410,14 +408,13 @@ char* wrap_in_frame(char msg[TAM]){
 		sprintf(new_buf+j, "%02x", digest2[i]);
 	}
 
-	//digest2[MD5_DIGEST_LENGTH*2]=0;
-	sprintf(result,"server %s MD5:%s", msg, new_buf);
-	printf("WRAP = %s\n", result);
+	sprintf(result,"server %s %s", msg, new_buf);
 
 	return result;
 }
 
 void get_md5hash(char *str, unsigned char digest[MD5_DIGEST_LENGTH]) {
+
     MD5_CTX ctx;
     MD5_Init(&ctx);
     MD5_Update(&ctx, str, strlen(str));

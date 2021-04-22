@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){
             sockfd = config_socket(argv);
 
             n_read = read(sockfd, &buffer, TAM);
-            printf("Server msg for client :%s\n", buffer);
+            printf("R: %s\n", buffer);
 
             if(n_read < 0){
                 perror("Client: invalid read");
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
             //formato de mensaje CLI <ommand> <client-ip> <client-port> <producer>
             char to_send [TAM];
             sprintf (to_send, "CLI %s", input);
-            printf("CLI to_send = %s\n", to_send);
+            printf("S: %s\n", to_send);
 
             n_write = write(sockfd, to_send, TAM);
             if(n_write == -1){
