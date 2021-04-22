@@ -11,6 +11,8 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <openssl/md5.h>
+#include <time.h>
+#include <signal.h>
 
 
 #include "../inc/liblist.h"
@@ -40,7 +42,11 @@ void send_to_suscribers(int producer, char msg[TAM]);
 char** parse_string(char* line);
 char* wrap_in_frame(char msg[TAM]);
 void get_md5hash(char *str, unsigned char digest[MD5_DIGEST_LENGTH]);
+void send_in_list(struct Node* p, char msg[TAM], int producer);
+void send_to_log(char* cli_ip, char msg[TAM], int producer);
 int config_queue();
+char *time_stamp();
+void signal_handler(int signum);
 
 
 struct epoll_event ev, events_array[MAX_EVENTS];
@@ -52,7 +58,13 @@ struct Node* p2 = NULL;
 struct Node* p3 = NULL;
 
 
+FILE* file = NULL;
+
+
+
 int main( int argc, char *argv[] ) {
+
+	signal(SIGINT, signal_handler);
 	int serv_sock_fd, ctrl_write, ctrl_read, qid;
 	socklen_t clilen;
 	char buffer[TAM];
@@ -355,7 +367,7 @@ void send_to_suscribers(int producer, char msg[TAM]){
 			
 			printf("Sending to suscribers of p1...\n");
 			char *wrapped  = wrap_in_frame(msg);
-			send_in_list(p1, wrapped);
+			send_in_list(p1, wrapped, producer);
 			print_clients_list(p1);
 
 		}
@@ -369,7 +381,7 @@ void send_to_suscribers(int producer, char msg[TAM]){
 		if(!is_empty(p2)){
 			printf("Sending to suscribers of p2...\n");
 			char *wrapped  = wrap_in_frame(msg);
-			send_in_list(p2, wrapped);
+			send_in_list(p2, wrapped, producer);
 			printf("\n---printing p2----\n");
 			print_clients_list(p2);
 
@@ -384,7 +396,7 @@ void send_to_suscribers(int producer, char msg[TAM]){
 		
 		if(!is_empty(p3)){
 			char *wrapped  = wrap_in_frame(msg);
-			send_in_list(p3, wrapped);
+			send_in_list(p3, wrapped, producer);
 			printf("\n---printing p3 list----\n");
 			print_clients_list(p3);
 
@@ -394,6 +406,61 @@ void send_to_suscribers(int producer, char msg[TAM]){
 			return;
 		}
 	}
+}
+
+void send_in_list(struct Node* p, char msg[TAM], int producer){
+
+    while(p != NULL){
+
+        if(write(p->cli_sock_fd, msg, TAM) < 0){
+            perror("server: could't write message to suscriber\n");
+            exit(EXIT_FAILURE);
+        }
+		send_to_log(p->ip, msg, producer);
+        printf("Le escribi a p%d->ip = %s fd = %d\n",producer,p->ip, p->cli_sock_fd);
+        p = p->next;
+    }
+}
+
+void send_to_log(char* cli_ip, char msg[TAM], int producer){
+
+	printf("ESTOY LOGEANDO\n");
+
+	if ((file = fopen("log.txt", "a")) == NULL) {
+        
+        perror("Can't open log.txt");
+        exit(EXIT_FAILURE);
+    }
+	
+	static int max_lines = 0;
+
+	if(max_lines < 1000){
+		printf("inside if\n");
+		/****************WORKING******************/
+		fprintf(file, "%s from: P%d to: %s | msg: %s\n"
+					,time_stamp(), producer, cli_ip, msg);  
+
+		max_lines++;
+	}
+	else{
+		max_lines = 0;
+		fclose(file);
+		file = fopen("log.txt", "w");
+		fclose(file);
+		file = fopen("log.txt", "a");
+	}
+
+}
+
+char* time_stamp(){
+
+    char *timestamp = (char *)malloc(sizeof(char) * 16);
+    time_t ltime = time(NULL);
+    struct tm *tm = localtime(&ltime);
+ 
+    sprintf(timestamp,"%02d/%02d/%04d %02d:%02d:%02d", tm->tm_mday, tm->tm_mon, 
+        tm->tm_year+1900, tm->tm_hour, tm->tm_min, tm->tm_sec);
+    return timestamp;
 }
 
 char* wrap_in_frame(char msg[TAM]){
@@ -419,4 +486,12 @@ void get_md5hash(char *str, unsigned char digest[MD5_DIGEST_LENGTH]) {
     MD5_Init(&ctx);
     MD5_Update(&ctx, str, strlen(str));
     MD5_Final(digest, &ctx);
+}
+
+
+void signal_handler(int signum){
+
+  printf("\nInside handler function  %d\n", signum);
+  fclose(file);
+  signal(SIGINT,SIG_DFL);   // Re Register signal handler for default action
 }

@@ -6,7 +6,7 @@ all: clean  bin/cli bin/serv bin/p1 bin/p2 bin/p3 bin/CLI
 bin/cli:
 	$(CC) $(CFLAGS) src/client.c -o bin/cli -lcrypto -lssl
 bin/serv: obj/liblist.o obj/client_list.o 
-	$(CC) $(CFLAGS) src/server.c obj/liblist.o obj/client_list.o -o bin/serv  -lcrypto -lssl
+	$(CC) $(CFLAGS) src/server.c obj/liblist.o obj/client_list.o -o bin/serv  -lcrypto -lssl -lzip
 bin/CLI:
 	$(CC) $(CFLAGS) src/CLI.c -o bin/CLI
 obj/liblist.o:
