@@ -13,6 +13,7 @@
 #include <openssl/md5.h>
 #include <time.h>
 #include <signal.h>
+#include <zip.h>
 
 
 #include "../inc/liblist.h"
@@ -47,6 +48,7 @@ void send_to_log(char* cli_ip, char msg[TAM], int producer);
 int config_queue();
 char *time_stamp();
 void signal_handler(int signum);
+void compress_file();
 
 
 struct epoll_event ev, events_array[MAX_EVENTS];
@@ -266,7 +268,10 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 			}
 		}
 		else if((strncmp(commands[1], "log", 3) == 0)){
-			//still dont know
+			//commands[2] fd to send
+
+			compress_file();
+
 		}
 
 	}
@@ -494,4 +499,55 @@ void signal_handler(int signum){
   printf("\nInside handler function  %d\n", signum);
   fclose(file);
   signal(SIGINT,SIG_DFL);   // Re Register signal handler for default action
+}
+
+void compress_file(){
+
+	char* buffer = NULL;
+	long int buf_size = 0;
+	zip_source_t* zs;
+	zip_t* z;
+	int err;
+
+	fclose(file);
+	
+
+	if ((file = fopen("log.txt", "r")) == NULL) {
+        
+        perror("Can't open log.txt to read");
+        exit(EXIT_FAILURE);
+    }
+
+	rewind(file);
+    fseek(file, 0, SEEK_END);
+    buf_size = ftell(file);
+
+	rewind(file);
+	buffer = malloc((size_t)(buf_size+1) * sizeof(buffer));
+	fread(buffer,(size_t) buf_size, 1, file);
+
+	buffer[buf_size] = '\0';
+    printf("%s", buffer);
+
+
+	z = zip_open("log.zip", ZIP_CREATE, &err);
+    if(z == NULL){
+        perror("Error al clear el archivo zip\n");
+        exit(EXIT_FAILURE);
+    }
+
+	zs = zip_source_buffer(z, buffer, strlen(buffer), 0);
+    zip_file_add(z, "log.txt", zs, ZIP_FL_OVERWRITE | ZIP_FL_ENC_UTF_8);
+
+    zip_close(z);
+
+	
+	if ((file = fopen("log.txt", "a")) == NULL) {
+        
+        perror("Can't open log.txt to append");
+        exit(EXIT_FAILURE);
+    }
+	
+	free(buffer);
+
 }
