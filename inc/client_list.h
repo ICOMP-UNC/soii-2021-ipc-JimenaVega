@@ -1,8 +1,7 @@
 #ifndef _CLI_LIST_
 #define _CLI_LIST_
 
-// #include <stdio.h>
-// #include <stdlib.h>
+
 #define TAM 256
 
 struct Node {

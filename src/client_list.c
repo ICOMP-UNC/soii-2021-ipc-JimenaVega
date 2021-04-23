@@ -1,4 +1,5 @@
 /*references https://www.geeksforgeeks.org/linked-list-set-3-deleting-node/*/
+/*references https://www.geeksforgeeks.org/linked-list-set-3-deleting-node/*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +7,7 @@
 
 #include "../inc/client_list.h" 
 #define TAM 256
+
 
 void push(struct Node** head_ref, char* ip, int port, int cli_sock_fd){
 
