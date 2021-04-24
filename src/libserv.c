@@ -2,9 +2,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 #include "../inc/libserv.h"
 
 
+/**
+ * @brief configure IPv4 with connection socket
+ * 
+ * @param port to connect
+ * @return int socket fd
+ */
 int config_socket(uint16_t port){
 
 	struct sockaddr_in serv_addr;
@@ -32,12 +39,13 @@ int config_socket(uint16_t port){
 
 }
 
-/*********************************************************************//**
-* @brief        
-* @param[in]   
-
-* @return        None
-**********************************************************************/
+/**
+ * @brief interprets commands from CLI and redirect to the 
+ * 			right functions.
+ * 
+ * @param buffer message to send from producer
+ * @param clisockfd 
+ */
 void message_interpreter(char buffer[TAM], int clisockfd){
 
 	char** commands = parse_string(buffer);
@@ -70,8 +78,7 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 				
 				suscribe_client(commands[4], commands[2],
 						 ((int)strtol(commands[3],(char **)NULL, 10)), fd);
-				//se borra de la lista de solteros y se la agrega a la lista con productores
-				//delete_node(&single_clients, commands[2]);
+
 			}
 			else{
 				printf("Client doesn't exist. Please try again.\n");
@@ -87,7 +94,6 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 		}
 		else if((strncmp(commands[1], "log", 3) == 0)){
 			//commands[2] fd to send
-
 			compress_file();
 
 		}
@@ -96,6 +102,14 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 
 }
 
+/**
+ * @brief suscribe client to a list using its IP, port and socket fd.
+ * 
+ * @param producer 
+ * @param ip 
+ * @param port 
+ * @param clisockfd 
+ */
 void suscribe_client(char *producer, char* ip, int port, int clisockfd){
 
 	if(strncmp(producer, "P1", 2) == 0){
@@ -111,7 +125,6 @@ void suscribe_client(char *producer, char* ip, int port, int clisockfd){
 		push(&p3, ip, port, clisockfd);
 		print_clients_list(p3);
 	}
-	//delete_node(&single_clients, ip);
 }
 
 void unsuscribe_client(char *producer, char* ip){
@@ -128,6 +141,12 @@ void unsuscribe_client(char *producer, char* ip){
 	}
 }
 
+/**
+ * @brief parse string into a char array
+ * 
+ * @param line 
+ * @return char** 
+ */
 char** parse_string(char* line){
     
     char *token;
@@ -152,17 +171,16 @@ char** parse_string(char* line){
     arr[i-1][strlen(arr[i-1])-1]= '\0';
     free(token);
 
-	// int x = 0;
-	// while(arr[x] != NULL){
-	// 	printf("commands[%d] = %s|",x, arr[x]);
-	// 	x++;
-	// }
 	printf("\n");
-    //free(line);
      
     return arr;
 }
 
+/**
+ * @brief configure queue to receive messages from producers
+ * 
+ * @return int 
+ */
 int config_queue(){
 
     key_t msg_queue_key;
@@ -182,6 +200,12 @@ int config_queue(){
 
 }
 
+/**
+ * @brief send message to the right suscriber
+ * 
+ * @param producer 
+ * @param msg 
+ */
 void send_to_suscribers(int producer, char msg[TAM]){
 
 	if(producer == 1){
@@ -194,10 +218,6 @@ void send_to_suscribers(int producer, char msg[TAM]){
 			print_clients_list(p1);
 
 		}
-		else{
-			printf("There are no suscribers for producer P1\n");
-			return;
-		}
 	}
 	else if(producer == 2){
 		
@@ -208,10 +228,6 @@ void send_to_suscribers(int producer, char msg[TAM]){
 			printf("\n---printing p2----\n");
 			print_clients_list(p2);
 
-		}
-		else{
-			printf("There are no suscribers for producer P2\n");
-			return;
 		}
 
 	}
@@ -224,13 +240,16 @@ void send_to_suscribers(int producer, char msg[TAM]){
 			print_clients_list(p3);
 
 		}
-		else{
-			printf("There are no suscribers for producer P3\n");
-			return;
-		}
 	}
 }
 
+/**
+ * @brief writes to client socket. 
+ * 
+ * @param p 
+ * @param msg 
+ * @param producer 
+ */
 void send_in_list(struct Node* p, char msg[TAM], int producer){
 
     while(p != NULL){
@@ -245,9 +264,14 @@ void send_in_list(struct Node* p, char msg[TAM], int producer){
     }
 }
 
+/**
+ * @brief writes log file and control its size.
+ * 
+ * @param cli_ip 
+ * @param msg 
+ * @param producer 
+ */
 void send_to_log(char* cli_ip, char msg[TAM], int producer){
-
-	printf("ESTOY LOGEANDO\n");
 
 	if ((file = fopen("log.txt", "a")) == NULL) {
         
@@ -273,6 +297,11 @@ void send_to_log(char* cli_ip, char msg[TAM], int producer){
 
 }
 
+/**
+ * @brief return the current date and time.
+ * 
+ * @return char* 
+ */
 char* time_stamp(){
 
     char *timestamp = (char *)malloc(sizeof(char) * 16);
@@ -284,6 +313,12 @@ char* time_stamp(){
     return timestamp;
 }
 
+/**
+ * @brief puts message into frame
+ * 
+ * @param msg 
+ * @return char* frame
+ */
 char* wrap_in_frame(char msg[TAM]){
 
 	char *result = malloc(64);
@@ -301,6 +336,13 @@ char* wrap_in_frame(char msg[TAM]){
 	return result;
 }
 
+/**
+ * @brief Get the md5hash object
+ * 
+ * @param str 
+ * @param digest 
+ */
+
 void get_md5hash(char *str, unsigned char digest[MD5_DIGEST_LENGTH]) {
 
     MD5_CTX ctx;
@@ -309,15 +351,10 @@ void get_md5hash(char *str, unsigned char digest[MD5_DIGEST_LENGTH]) {
     MD5_Final(digest, &ctx);
 }
 
-
-void signal_handler(int signum){
-
-  printf("\nInside handler function  %d\n", signum);
-  fclose(file);
-  //signal(SIGINT,SIG_DFL);   // Re Register signal handler for default action
-  exit(EXIT_FAILURE);
-}
-
+/**
+ * @brief compress file into .zip
+ * 
+ */
 void compress_file(){
 
 	char* buffer = NULL;
@@ -367,4 +404,17 @@ void compress_file(){
 	
 	free(buffer);
 
+}
+
+/**
+ * @brief in case of CTRL-C signal closes the file
+ * 
+ * @param signum 
+ */
+void signal_handler(int signum){
+
+  printf("\nInside handler function  %d\n", signum);
+  fclose(file);
+  //signal(SIGINT,SIG_DFL);   // Re Register signal handler for default action
+  exit(EXIT_FAILURE);
 }
