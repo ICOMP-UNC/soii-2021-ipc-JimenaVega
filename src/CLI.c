@@ -29,6 +29,8 @@ int main(int argc, char *argv[]){
 		exit(0);
 	}
 
+    sockfd = config_socket(argv);
+
     while(1){
 
         display_name();
@@ -39,8 +41,7 @@ int main(int argc, char *argv[]){
             print_prompt();
         }
         else{
-            sockfd = config_socket(argv);
-
+            
             n_read = read(sockfd, &buffer, TAM);
             printf("R: %s\n", buffer);
 

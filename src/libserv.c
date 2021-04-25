@@ -12,7 +12,7 @@
  * @param port to connect
  * @return int socket fd
  */
-int config_socket(uint16_t port){
+int config_socket(uint16_t port, char* server_ip){
 
 	struct sockaddr_in serv_addr;
 	int serv_sock_fd;
@@ -22,7 +22,7 @@ int config_socket(uint16_t port){
 	memset((char *) &serv_addr, 0, sizeof(serv_addr));
 	
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = inet_addr("192.168.100.7");//INADDR_ANY;
+	serv_addr.sin_addr.s_addr = inet_addr(server_ip);//INADDR_ANY;
 	serv_addr.sin_port = htons(port);
 	printf("server address : %s\n", inet_ntoa(serv_addr.sin_addr));
 
@@ -42,6 +42,9 @@ int config_socket(uint16_t port){
 /**
  * @brief interprets commands from CLI and redirect to the 
  * 			right functions.
+ * 			commands[0] = ACK/CLI
+ * 			commands[1] = client-ip
+ * 			commands[2] = port
  * 
  * @param buffer message to send from producer
  * @param clisockfd 
@@ -51,8 +54,27 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 	char** commands = parse_string(buffer);
 
 	if((strncmp(commands[0], "ACK", 3) == 0)){
-	
-		if(!is_in_list(single_clients, commands[1])){
+
+		if(is_in_disclist(disc_clients, commands[1])){
+
+			long int disc_time = get_start_time(disc_clients, commands[1]);
+			if((time(NULL) - disc_time) < MAX_WAIT ){
+				printf("\nENVIO BUFFER A CLIENTE\n");
+			}
+			else{
+				// if (close(clisockfd) < 0) //el cliente llego despues de 5s, se desconecta
+         		// 	perror("close");
+				printf("Me cerre :(\n");
+				unsuscribe_client("P1", commands[1]);
+				unsuscribe_client("P2", commands[1]);
+				unsuscribe_client("P3", commands[1]);
+				
+				delete_Node_d(&disc_clients, commands[1]);
+			}
+
+			/****************WORKING**************/
+		}
+		else if(!is_in_list(single_clients, commands[1])){
 
 			push(&single_clients, commands[1], 
 				((int)strtol(commands[2],(char **)NULL, 10)) ,clisockfd);
@@ -130,7 +152,6 @@ void suscribe_client(char *producer, char* ip, int port, int clisockfd){
 void unsuscribe_client(char *producer, char* ip){
 
 	if(strncmp(producer, "P1", 2) == 0){
-		printf("*****************borre al cliente en P1\n");
 		delete_node(&p1, ip);
 	}
 	else if(strncmp(producer, "P2", 2) == 0){
@@ -139,6 +160,7 @@ void unsuscribe_client(char *producer, char* ip){
 	else if(strncmp(producer, "P3", 2) == 0){
 		delete_node(&p3, ip);
 	}
+	printf("client erased from %s list\n", producer);
 }
 
 /**
@@ -253,13 +275,25 @@ void send_to_suscribers(int producer, char msg[TAM]){
 void send_in_list(struct Node* p, char msg[TAM], int producer){
 
     while(p != NULL){
+		if(is_in_disclist(disc_clients, p->ip)){
+			add_disc_buff(disc_clients, msg);
 
-        if(write(p->cli_sock_fd, msg, TAM) < 0){
-            perror("server: could't write message to suscriber\n");
-            exit(EXIT_FAILURE);
-        }
-		send_to_log(p->ip, msg, producer);
-        printf("Le escribi a p%d->ip = %s fd = %d\n",producer,p->ip, p->cli_sock_fd);
+		/*****WORKING******/
+			print_disc_buffer(disc_clients);
+
+
+
+		}
+		else{
+
+			if(write(p->cli_sock_fd, msg, TAM) < 0){
+				perror("server: could't write message to suscriber\n");
+				exit(EXIT_FAILURE);
+			}
+			send_to_log(p->ip, msg, producer);
+			printf("Le escribi a p%d->ip = %s fd = %d\n",producer,p->ip, p->cli_sock_fd);
+		}
+
         p = p->next;
     }
 }

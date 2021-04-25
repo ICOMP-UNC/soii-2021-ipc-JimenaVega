@@ -13,8 +13,8 @@ int main( int argc, char *argv[] ) {
 	struct message message;
 
 
-	if (argc < 2) {
-    	fprintf(stderr, "You should write: %s <port>\n", argv[0]);
+	if (argc < 3) {
+    	fprintf(stderr, "You should write: %s <port> <server-ip>\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
 	port = (uint16_t) atoi(argv[1]);
@@ -24,7 +24,7 @@ int main( int argc, char *argv[] ) {
 	printf("server QID : %d\n", qid);
 
 	//socket configuration
-	serv_sock_fd = config_socket(port);
+	serv_sock_fd = config_socket(port, argv[2]);
 	clilen = sizeof(cli_addr);
 
 	//epoll configuration
@@ -53,6 +53,10 @@ int main( int argc, char *argv[] ) {
 		for(int i = 0; i < ready_fds; i++){
 			if(events_array[i].data.fd == serv_sock_fd){
 
+				//REVISO SI LO TENIA EN LA LISTA DE SINGLE
+				//SI LO TENGO : BUSCO EL BUFFER ACUMULADO Y SE LO PASO COMO READ
+				//ELSE TODO NORMAL
+
 				client_sock = accept(serv_sock_fd,
 								  (struct sockaddr *) &cli_addr, 
 								   &clilen);
@@ -65,8 +69,10 @@ int main( int argc, char *argv[] ) {
 				printf(" client [%d] arrived\n", client_sock);
 				
 
-				ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
+				ev.events = EPOLLIN | EPOLLET | EPOLLOUT | EPOLLRDHUP;
             	ev.data.fd = client_sock;
+
+				printf("client socket %d\n", client_sock);
 
 			    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_sock,
                         &ev) == -1) {
@@ -100,6 +106,27 @@ int main( int argc, char *argv[] ) {
 					}
 
 					message_interpreter(buffer, events_array[i].data.fd);
+				}
+				else if(events_array[i].events & EPOLLRDHUP){
+					
+					int aux[3];
+					char* cli_ip = strdup(get_ip(single_clients, (int) events_array[i].events));
+					
+				 	aux[0] = is_in_list(p1, cli_ip);
+					aux[1] = is_in_list(p2, cli_ip);
+					aux[2] = is_in_list(p3, cli_ip);
+
+					//lo guardo en la lista de descoenctados
+					push_disc_list(&disc_clients, cli_ip, aux);
+					//erased from single clients list but not from the producers lists
+					delete_node(&single_clients, cli_ip);
+					
+					/**************WORKING****************/
+
+					//2- add to log
+				
+
+					free(cli_ip);
 				}
 			}
 		}

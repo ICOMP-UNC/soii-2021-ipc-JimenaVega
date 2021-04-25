@@ -20,12 +20,14 @@
 
 
 #include "../inc/client_list.h"
+#include "../inc/discon_list.h"
 
 #define SERVER_KEY_PATHNAME "/tmp/mqueue_server_key"
 #define PROJECT_ID 'M'
 #define QUEUE_PERMISSIONS 0660
 #define TAM 256
 #define MAX_EVENTS 5000
+#define MAX_WAIT 5 //how much time we wait for reconnection of fallen client
 
 struct message_text {
     int qid;
@@ -38,7 +40,7 @@ struct message {
     struct message_text message_text;
 };
 
-extern int config_socket(uint16_t port);
+extern int config_socket(uint16_t port, char* server_ip);
 extern void message_interpreter(char buffer[TAM], int clisockfd);
 extern void suscribe_client(char *producer, char* ip, int port, int clisockfd);
 extern void unsuscribe_client(char *producer, char* ip);
@@ -56,7 +58,9 @@ extern void compress_file();
 struct epoll_event ev, events_array[MAX_EVENTS];
 int listen_sock, client_sock, ready_fds, epoll_fd;
 
+
 struct Node* single_clients;
+struct Node_d* disc_clients;
 struct Node* p1;
 struct Node* p2;
 struct Node* p3;

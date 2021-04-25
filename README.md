@@ -66,21 +66,21 @@ Como se dijo anteriormente, estos se comunican con el server via socket. Para po
 
 
 
-![Frames](../img/../soii-2021-ipc-JimenaVega/img/frames-SO2-TP1.png)
+![Frames](/img/frames-SO2-TP1.png)
 
 
 ## Secuencias
 
 1. Primer interaccion entre client y server
 
-![Frames](../img/../soii-2021-ipc-JimenaVega/img/client_serv_1.png)
-2. Interacciones entre CLI y server
+![Frames](/img/client_serv_1.png)
+1. Interacciones entre CLI y server
 
-![Frames](../img/../soii-2021-ipc-JimenaVega/img/CLI_serv.png)
+![Frames](/img/CLI_serv.png)
 
-3.  Comunicacion regular entre productores, server y clients.
+1.  Comunicacion regular entre productores, server y clients.
 
-![Frames](../img/../soii-2021-ipc-JimenaVega/img/cli-serv-pro.png)
+![Frames](/img/cli-serv-pro.png)
 
 
 
@@ -133,7 +133,7 @@ python3 producers.py
 │    ├── global_var.h
 │    └── cient_list.h
 ├── obj
-├──src
+├── src
 │    ├── clean.py
 │    ├── CLI.c
 │    ├── client.c
@@ -162,4 +162,4 @@ python3 clean.py
 
 - man epoll(7) : codigo de ejemplo
 - msg queue : [https://www.softprayog.in/programming/interprocess-communication-using-system-v-message-queues-in-linux]
-
+- lists : [https://www.geeksforgeeks.org/linked-list-set-3-deleting-node]

@@ -3,10 +3,11 @@ import random
 
 
 port = input("Server port: ")
-
+serverIP =input("Server IP: ")
 cli  = int(input("Amount of clients: "))
 
-serverIP = "192.168.100.7"
+
+# "192.168.100.7"
 
 for i in range (cli):
     clientIP = ".".join(map(str, (random.randint(0, 255) for _ in range(4))))

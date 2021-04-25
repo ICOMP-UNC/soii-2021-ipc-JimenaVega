@@ -1,5 +1,4 @@
-/*references https://www.geeksforgeeks.org/linked-list-set-3-deleting-node/*/
-/*references https://www.geeksforgeeks.org/linked-list-set-3-deleting-node/*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,17 +22,22 @@ void push(struct Node** head_ref, char* ip, int port, int cli_sock_fd){
 /* Given a reference (pointer to pointer) to the head of a
    list and a key, deletes the first occurrence of key in
    linked list */
-void delete_node(struct Node** head_ref, char* key){
+void delete_node(struct Node** head_ref, char* ip){
 
     struct Node *temp = *head_ref, *prev;
+
+    if(!is_in_list(temp,ip)){
+        //printf("No esta en la lista");
+        return;
+    }
  
-    if (temp != NULL && (strcmp(temp->ip, key) == 0)){
+    if (temp != NULL && (strcmp(temp->ip, ip) == 0)){
         *head_ref = temp->next; 
         free(temp); 
         return;
     }
  
-    while (temp != NULL && (strcmp(temp->ip, key) != 0)) {
+    while (temp != NULL && (strcmp(temp->ip, ip) != 0)) {
         prev = temp;
         temp = temp->next;
     }
@@ -95,4 +99,18 @@ int get_client_fd(struct Node* node, char* ip){
     }
 
     return 0;
+}
+
+char* get_ip(struct Node* node, int clifd){
+
+    while(node != NULL){
+
+        if(node->cli_sock_fd == clifd){
+
+            return node->ip;
+        }
+        node = node->next;
+    }
+
+    return NULL;  
 }

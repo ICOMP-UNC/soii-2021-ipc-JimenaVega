@@ -55,6 +55,7 @@ int main( int argc, char *argv[] ){
 		perror( "Client: connection error");
 		exit(1);
 	}
+	int count_test = 1;
 
 	while(1) {
 
@@ -84,6 +85,13 @@ int main( int argc, char *argv[] ){
 			else{
 				printf("Error. Unrecognized hash\n");
 			}
+		}
+		/***************TESTING******************/
+		
+		if(count_test){
+			sleep(25);
+			printf("ME DESCONECTO\n");
+			close(sockfd);
 		}
 		
 	}
