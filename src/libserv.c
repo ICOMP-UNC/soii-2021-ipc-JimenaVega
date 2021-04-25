@@ -55,17 +55,37 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 
 	if((strncmp(commands[0], "ACK", 3) == 0)){
 
+		int port = ((int)strtol(commands[2],(char **)NULL, 10));
+
 		if(is_in_disclist(disc_clients, commands[1])){
 
 			long int disc_time = get_start_time(disc_clients, commands[1]);
 			printf("tiempo de espera = %ld\n",(time(NULL) - disc_time));
 			if((time(NULL) - disc_time) < MAX_WAIT ){
 				printf("\nENVIO BUFFER A CLIENTE\n");
-				push(&single_clients, commands[1],
-					((int)strtol(commands[2],(char **)NULL, 10)), clisockfd);
+				push(&single_clients, commands[1], port, clisockfd);
 				
 					
 				/*************WOOOOOOOORKING************/
+
+				size_t buff_size = get_total_msg(disc_clients, commands[1]);
+				printf("[IP][%s]\t size of buff = %ld\tsocket =%d\n",commands[1], buff_size,clisockfd );
+				char** buffer = get_buff(disc_clients, commands[1]);
+
+				for(size_t i = 0; i < buff_size; i++){
+					printf("buffer[%ld] = %s\n",i,buffer[i]);
+				}
+				printf("END OF BUFFER\n");
+				for(size_t m = 0; m < buff_size; m++){
+
+					printf("buffer[%ld] = %s\n",m,buffer[m]);
+					if(write(clisockfd, buffer[m], TAM) < 0){
+						perror("server: could't write message to suscriber\n");
+						exit(EXIT_FAILURE);
+					}
+
+				}
+				printf("END OF BUFFER 2\n");
 
 				//ESCRIBIR TODO EL BUFFER		
 			}
@@ -73,21 +93,29 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 				if (close(clisockfd) < 0) //el cliente llego despues de 5s, se desconecta
          			perror("close");
 				printf("Me cerre :(\n");
-				unsuscribe_client("P1", commands[1]);
-				unsuscribe_client("P2", commands[1]);
-				unsuscribe_client("P3", commands[1]);
-				
-				
-				printf("Fuera de delete node\n");
 			}
+		
+			if(is_in_list(p1, commands[1])){
+				unsuscribe_client("P1", commands[1]);
+				suscribe_client("P1", commands[1], port, clisockfd);
+
+			}
+			if(is_in_list(p2, commands[1])){
+				unsuscribe_client("P2", commands[1]);
+				suscribe_client("P2", commands[1], port, clisockfd);
+			}
+			if(is_in_list(p3, commands[1])){
+				unsuscribe_client("P3", commands[1]);
+				suscribe_client("P3", commands[1], port, clisockfd);
+			}
+	
 
 			delete_Node_d(&disc_clients, commands[1]);
 			/****************WORKING**************/
 		}
 		else if(!is_in_list(single_clients, commands[1])){
 
-			push(&single_clients, commands[1], 
-				((int)strtol(commands[2],(char **)NULL, 10)) ,clisockfd);
+			push(&single_clients, commands[1], port ,clisockfd);
 
 			printf("...SINGLE LIST....\n");
 			print_clients_list(single_clients);
@@ -283,15 +311,18 @@ void send_to_suscribers(int producer, char msg[TAM]){
  * @param msg 
  * @param producer 
  */
-void send_in_list(struct Node* p, char msg[TAM], int producer){
+void send_in_list(struct Node* p, char msg[300], int producer){
 
     while(p != NULL){
 		if(is_in_disclist(disc_clients, p->ip)){
 			add_disc_buff(disc_clients, msg);
 
 		/*****WORKING******/
-			printf("sending for disc client buffer\n");
-			print_disc_buffer(disc_clients);
+
+		printf("sending for disc client buffer\n");
+		print_disc_buffer(disc_clients);
+
+
 
 
 
@@ -375,7 +406,7 @@ char* time_stamp(){
  */
 char* wrap_in_frame(char msg[TAM]){
 
-	char *result = malloc(64);
+	char *result = malloc(300);
     char new_buf[(MD5_DIGEST_LENGTH*2)+1];
     unsigned char digest2[MD5_DIGEST_LENGTH];
 

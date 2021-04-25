@@ -129,39 +129,10 @@ int main( int argc, char *argv[] ) {
 
 						free(cli_ip);
 					}
-					// else if(ctrl_read < 0){
-					// 	perror("Error reading");
-					// 	exit(EXIT_FAILURE);
-					// }
-
 					
-
 					bzero(buffer, TAM);
 				}
-				else if(events_array[i].events & EPOLLRDHUP){
-					/**************WORKING****************/
-
-					printf("client [%d] se desconecto EPOLLRDHUP\n", events_array[i].events);
-					
-					/*int aux[3];
-					char* cli_ip = strdup(get_ip(single_clients, (int) events_array[i].events));
-					
-				 	aux[0] = is_in_list(p1, cli_ip);
-					aux[1] = is_in_list(p2, cli_ip);
-					aux[2] = is_in_list(p3, cli_ip);
-
-					//lo guardo en la lista de descoenctados
-					push_disc_list(&disc_clients, cli_ip, aux);
-					//erased from single clients list but not from the producers lists
-					delete_node(&single_clients, cli_ip);
-					
-					
-
-					//2- add to log
-				
-
-					free(cli_ip);*/
-				}
+		
 			}
 		}
 		

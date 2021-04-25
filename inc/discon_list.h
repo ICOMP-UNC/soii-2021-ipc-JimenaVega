@@ -24,6 +24,8 @@ extern void push_disc_list(struct Node_d**, char*, int[3]);
 extern void add_disc_buff(struct Node_d* node, char* msg);
 extern void print_disc_list(struct Node_d* node);
 extern void print_disc_buffer(struct Node_d* node);
+extern size_t get_total_msg(struct Node_d* node, char* ip);
+extern char** get_buff(struct Node_d* node, char* ip);
 
 
 

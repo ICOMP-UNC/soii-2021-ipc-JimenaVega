@@ -64,7 +64,7 @@ void delete_Node_d(struct Node_d** head_ref, char* ip){
 
     if (temp != NULL && (strcmp(temp->ip, ip) == 0)){
 
-        if(temp->acum_msg != NULL)
+        if(temp->acum_msg[0] == 0)
             free_array(temp->acum_msg);
         *head_ref = temp->next; 
         free(temp); 
@@ -76,7 +76,7 @@ void delete_Node_d(struct Node_d** head_ref, char* ip){
         temp = temp->next;
     }
 
-    if(temp->acum_msg != NULL)
+    if(temp->acum_msg[0] == 0)
         free_array(temp->acum_msg);
 
     if (temp == NULL)
@@ -111,11 +111,39 @@ void push_disc_list(struct Node_d** head_ref, char* ip, int p[3]){
     for (int i = 0; i < 3; i++){
         new_Node_d->prod[i] = p[i];
     }
-    new_Node_d->acum_msg = NULL;
+    new_Node_d->acum_msg = (char**) calloc(1, sizeof(char*));
+    new_Node_d->pos_d = 0;
     new_Node_d->start_time = time(NULL);
     new_Node_d->next = (*head_ref);
     (*head_ref) = new_Node_d;
 }
+
+size_t get_total_msg(struct Node_d* node, char* ip){
+    while(node != NULL){
+
+        if(strcmp(node->ip,ip) == 0){
+            return node->pos_d;
+        }
+        node = node->next;
+    }
+
+    return 0; 
+}
+
+char** get_buff(struct Node_d* node, char* ip){
+        while(node != NULL){
+
+        if(strcmp(node->ip,ip) == 0){
+            return node->acum_msg;
+        }
+        node = node->next;
+    }
+
+    return NULL;
+
+}
+
+
 /**
  * @brief  adds a new message from producer to a dinamic array
  * 
@@ -123,14 +151,20 @@ void push_disc_list(struct Node_d** head_ref, char* ip, int p[3]){
  * @param ip 
  * @param msg 
  */
-void add_disc_buff(struct Node_d* node, char msg[TAM]){
+void add_disc_buff(struct Node_d* node, char msg[300]){
+
+    printf("streln(msg+1) =  %ld  message |%s|\n",strlen(msg+1), msg);
+    printf("node->pos_D = %ld\n",node->pos_d );
+     printf("dfedgerwgwrrfgf\n");
 
     *(node->acum_msg + node->pos_d) = (char*) calloc (strlen(msg+1), sizeof(char));
 
-    node->acum_msg = (char**) realloc(node->acum_msg, 
-                                    ((sizeof(char*)) * (2 + node->pos_d)));
+     printf("dfedgerwgwrrfgf\n");
 
-    strcpy((node->acum_msg[node->pos_d]), msg);
+    node->acum_msg = (char**) realloc(node->acum_msg, ((sizeof(char*)) *(2 + node->pos_d)));
+     printf("dfedgerwgwrrfgf\n");
+
+    strcpy(node->acum_msg[node->pos_d],msg);
    
     printf("1- arr[%ld]= %s\n\n",node->pos_d,node->acum_msg[node->pos_d]);
 

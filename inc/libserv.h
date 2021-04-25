@@ -48,7 +48,7 @@ extern void send_to_suscribers(int producer, char msg[TAM]);
 extern char** parse_string(char* line);
 extern char* wrap_in_frame(char msg[TAM]);
 extern void get_md5hash(char *str, unsigned char digest[MD5_DIGEST_LENGTH]);
-extern void send_in_list(struct Node* p, char msg[TAM], int producer);
+extern void send_in_list(struct Node* p, char msg[300], int producer);
 extern void send_to_log(char* cli_ip, char msg[TAM], int producer);
 extern int config_queue();
 extern char *time_stamp();
