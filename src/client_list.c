@@ -1,11 +1,21 @@
-
+/**
+ * @file client_list.c
+ * @author Jimena Vega
+ * @brief  List to add clients that are not 
+ *         suscribed to any producer (single_clients).
+ *         Or to add clients that have a producer (p1,p2,ṕ3)
+ * @version 0.1
+ * @date 2021-04-25
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "../inc/client_list.h" 
-
 
 
 void push(struct Node** head_ref, char* ip, int port, int cli_sock_fd){
@@ -18,17 +28,12 @@ void push(struct Node** head_ref, char* ip, int port, int cli_sock_fd){
     new_node->next = (*head_ref);
     (*head_ref) = new_node;
 }
- 
-/* Given a reference (pointer to pointer) to the head of a
-   list and a key, deletes the first occurrence of key in
-   linked list */
+
 void delete_node(struct Node** head_ref, char* ip){
 
-    printf("ENTRE delete in single list \n");
     struct Node *temp = *head_ref, *prev;
 
     if(!is_in_list(temp,ip)){
-        //printf("No esta en la lista");
         return;
     }
  
@@ -49,8 +54,6 @@ void delete_node(struct Node** head_ref, char* ip){
     prev->next = temp->next;
  
     free(temp); 
-    
-    printf("SALI delete in single list \n");
 }
 
 int is_in_list(struct Node* node, char* key){
@@ -73,7 +76,7 @@ void print_clients_list(struct Node* node){
         printf("socket: %d\n", node->cli_sock_fd);
         node = node->next;
     }
-    printf("---------------\n");
+    printf("---------------------------------------------\n");
 }
 
 int is_empty(struct Node* node){

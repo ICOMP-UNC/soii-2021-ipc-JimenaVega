@@ -1,3 +1,4 @@
+#This script allows to execute 3 producers at the same time
 import os
 
 PRODUCERS = 3

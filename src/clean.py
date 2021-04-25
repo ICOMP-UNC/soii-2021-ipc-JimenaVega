@@ -9,3 +9,6 @@ os.system("killall -9 ../bin/cli")
 
 #kill CLI
 os.system("killall -9 ../bin/CLI")
+
+#kill server
+os.system("killall -9 ../bin/serv")

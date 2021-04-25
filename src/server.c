@@ -1,5 +1,18 @@
+/**
+ * @file server.c
+ * @author Jimena Vega
+ * @brief  This is the core of the system. Also called delivery Manager.
+ * 		   Accepts System V queue messages from producers.
+ * 		   Accepts or refuse clients from a socket connected CLI.
+ * 		   Sends and receives messages from multiple clients connected via socket.
+ * 		
+ * @version 0.1
+ * @date 2021-04-25
+ * @copyright Copyright (c) 2021
+ * 
+ */
+ 
  #include "../inc/libserv.h"
-
 
 
 int main( int argc, char *argv[] ) {
@@ -49,7 +62,7 @@ int main( int argc, char *argv[] ) {
 			perror("Error in epoll_wait()");
 			exit(EXIT_FAILURE);
 		}
-
+		//checking events for every file descriptor in events_array[]
 		for(int i = 0; i < ready_fds; i++){
 			if(events_array[i].data.fd == serv_sock_fd){
 
@@ -62,13 +75,10 @@ int main( int argc, char *argv[] ) {
 					exit(EXIT_FAILURE);
             	}  
 				
-				printf(" client [%d] arrived\n", client_sock);
+				printf("\033[1m->\033[0mclient [%d] arrived\n\n", client_sock);
 				
-
 				ev.events = EPOLLIN | EPOLLET | EPOLLOUT | EPOLLRDHUP;
             	ev.data.fd = client_sock;
-
-				printf("client socket %d\n", client_sock);
 
 			    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_sock,
                         &ev) == -1) {
@@ -76,6 +86,7 @@ int main( int argc, char *argv[] ) {
 					exit(EXIT_FAILURE);
            		}
 
+				//first messages from server to client
 				char* checksum = wrap_in_frame("SA");
 				char wrapped[TAM];
 				sprintf(wrapped, "%s", checksum);
@@ -104,31 +115,23 @@ int main( int argc, char *argv[] ) {
 
 						char* cli_ip = get_ip(single_clients, events_array[i].data.fd);
 						if(cli_ip != NULL){
-							printf("1-pase\n");
+						
 							aux[0] = is_in_list(p1, cli_ip);
 							aux[1] = is_in_list(p2, cli_ip);
 							aux[2] = is_in_list(p3, cli_ip);
-							printf("2-pase\n");
-
+							
 							send_to_log(cli_ip, "", -1);
 
 							push_disc_list(&disc_clients, cli_ip, aux);
 							print_disc_list(disc_clients);
 							delete_node(&single_clients, cli_ip);
 						}
-						else{
-							printf("SOY LA CLI u un cliente con la IP repetida\n");
-						}
-
-					
-
 
 						free(cli_ip);
 					}
 					
 					bzero(buffer, TAM);
 				}
-		
 			}
 		}
 		

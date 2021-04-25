@@ -1,3 +1,20 @@
+/**
+ * @file CLI.c
+ * @author Jimena Vega
+ * @brief  This command line interpreter allows the following inputs
+ *          add <client-ip> <port> <producer>
+ *          delete <client-ip> <port> <producer>
+ *          log <client-ip> <port>
+ * 
+ *         Usage : ./CLI <server-ip> <port>
+ *
+ * @version 0.1
+ * @date 2021-04-25
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,14 +57,13 @@ int main(int argc, char *argv[]){
         display_name();
         fgets(input, INPUT_SIZE, stdin);
         
-        printf("INPUT = |%s|\n", input);
         if(!validate_input(input)){
             printf("\nInvalid input\n");
             print_prompt();
         }
         else{
             if(first_time){
-                printf("Me bloquee esperando un read\n");
+               
                 n_read = read(sockfd, &buffer, TAM);
                 printf("R: %s\n", buffer);
             }
@@ -69,9 +85,6 @@ int main(int argc, char *argv[]){
                 n_read = 1;
                 first_time = 0;
             }
-            else{
-                printf("Me meti donde read ==0\n");
-            }
         }
     }
     //free(input);
@@ -86,9 +99,6 @@ void display_name(){
 }
 
 int validate_input(char* input){
-
-
-    //input[strcspn(input, "\n")] = '\0';
 
     char *copy = strdup(input);
     char *token = strtok(copy, " ");
@@ -117,9 +127,9 @@ int validate_input(char* input){
 
 void print_prompt(){
     printf("Please enter one of the following commands:\n");
-    printf("add <client-ip> <port> <producer>\n");
-    printf("delete <client-ip> <port> <producer>\n");
-    printf("log <client-ip> <port>\n");
+    printf("add \033[2m<client-ip> <port> <producer>\033[0m\n");
+    printf("delete \033[2m<client-ip> <port> <producer>\033[0m\n");
+    printf("log \033[2m<client-ip> <port>\033[0m\n");
 
 }
 
@@ -132,7 +142,6 @@ int config_socket(char *argv[]){
 
 	puerto = (uint16_t)atoi(argv[2]);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	printf("socket fd = %d\n", sockfd);
     server = gethostbyname(argv[1]);
 
 	memset( (char *) &serv_addr, '0', sizeof(serv_addr) );
@@ -148,9 +157,6 @@ int config_socket(char *argv[]){
 		perror( "Client: connection error");
 		exit(1);
 	}
-    else{
-        printf("CLI conectada con exito \n");
-    }
 
     return sockfd;
 }

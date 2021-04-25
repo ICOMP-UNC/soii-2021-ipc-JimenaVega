@@ -53,11 +53,9 @@ int is_in_disclist(struct Node_d* node, char* ip){
 
 void delete_Node_d(struct Node_d** head_ref, char* ip){
 
-    printf("Dentro de delete node\n");
     struct Node_d *temp = *head_ref, *prev;
 
     if(!is_in_disclist(temp,ip)){
-        //printf("No esta en la lista");
         return;
     }
 
@@ -102,7 +100,6 @@ long int get_start_time(struct Node_d* node, char* ip){
 
 void push_disc_list(struct Node_d** head_ref, char* ip, int p[3]){
 
-    printf("pushee al cliente %s en la disc list\n", ip);
     struct Node_d* new_Node_d = (struct Node_d*)malloc(sizeof(struct Node_d));
 
     new_Node_d->ip = strdup(ip);
@@ -152,16 +149,9 @@ char** get_buff(struct Node_d* node, char* ip){
  */
 void add_disc_buff(struct Node_d* node, char msg[300]){
 
-    printf("streln(msg+1) =  %ld  message |%s|\n",strlen(msg+1), msg);
-    printf("node->pos_D = %ld\n",node->pos_d );
-     printf("dfedgerwgwrrfgf\n");
-
     *(node->acum_msg + node->pos_d) = (char*) calloc (strlen(msg+1), sizeof(char));
-
-     printf("dfedgerwgwrrfgf\n");
-
-    node->acum_msg = (char**) realloc(node->acum_msg, ((sizeof(char*)) *(2 + node->pos_d)));
-     printf("dfedgerwgwrrfgf\n");
+    node->acum_msg = (char**) realloc(node->acum_msg,
+                                     ((sizeof(char*)) *(2 + node->pos_d)));
 
     strcpy(node->acum_msg[node->pos_d],msg);
    

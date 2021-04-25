@@ -1,10 +1,18 @@
+/**
+ * @file libserv.c
+ * @author Jimena Vega
+ * @brief library for general usage of server.c file.
+ * 		 This includes configurations of socket and SYstem V queue.
+ * @version 0.1
+ * @date 2021-04-25
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
-
-
 #include "../inc/libserv.h"
-
 
 /**
  * @brief configure IPv4 with connection socket
@@ -22,7 +30,7 @@ int config_socket(uint16_t port, char* server_ip){
 	memset((char *) &serv_addr, 0, sizeof(serv_addr));
 	
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = inet_addr(server_ip);//INADDR_ANY;
+	serv_addr.sin_addr.s_addr = inet_addr(server_ip);
 	serv_addr.sin_port = htons(port);
 	printf("server address : %s\n", inet_ntoa(serv_addr.sin_addr));
 
@@ -36,7 +44,6 @@ int config_socket(uint16_t port, char* server_ip){
 	listen(serv_sock_fd, MAX_EVENTS);
 
 	return serv_sock_fd;
-
 }
 
 /**
@@ -60,36 +67,31 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 		if(is_in_disclist(disc_clients, commands[1])){
 
 			long int disc_time = get_start_time(disc_clients, commands[1]);
-			printf("tiempo de espera = %ld\n",(time(NULL) - disc_time));
+			printf("Total waiting time : ");
+
 			if((time(NULL) - disc_time) < MAX_WAIT ){
-				printf("\nENVIO BUFFER A CLIENTE\n");
+
+				printf("\033[32m%lds\033[0m", (time(NULL) - disc_time));
+				printf("\nSending buffer...\n");
 				push(&single_clients, commands[1], port, clisockfd);
 				
-					
-				/*************WOOOOOOOORKING************/
-
 				size_t buff_size = get_total_msg(disc_clients, commands[1]);
-				printf("[IP][%s]\t size of buff = %ld\tsocket =%d\n",commands[1], buff_size,clisockfd );
 				char** buffer = get_buff(disc_clients, commands[1]);
-
-				for(size_t i = 0; i < buff_size; i++){
-					printf("buffer[%ld] = %s\n",i,buffer[i]);
-				}
-				printf("END OF BUFFER\n");
+			
 				for(size_t m = 0; m < buff_size; m++){
 
-					printf("buffer[%ld] = %s\n",m,buffer[m]);
+					printf("\033[1mbuffer[%ld] = %s\033[0m\n",m,buffer[m]);
 					if(write(clisockfd, buffer[m], TAM) < 0){
 						perror("server: could't write message to suscriber\n");
 						exit(EXIT_FAILURE);
 					}
 
 				}
-				printf("END OF BUFFER 2\n");
-
-				//ESCRIBIR TODO EL BUFFER		
+				printf("\n");
+	
 			}
 			else{
+				printf("\033[31m%lds\033[0m", (time(NULL) - disc_time));
 				if (close(clisockfd) < 0) //el cliente llego despues de 5s, se desconecta
          			perror("close");
 				printf("Me cerre :(\n");
@@ -109,15 +111,14 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 				suscribe_client("P3", commands[1], port, clisockfd);
 			}
 	
-
 			delete_Node_d(&disc_clients, commands[1]);
-			/****************WORKING**************/
+			
 		}
 		else if(!is_in_list(single_clients, commands[1])){
 
 			push(&single_clients, commands[1], port ,clisockfd);
 
-			printf("...SINGLE LIST....\n");
+			printf("----------SINGLE CLIENTS LIST----------\n");
 			print_clients_list(single_clients);
 		}
 		else{
@@ -128,7 +129,9 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 	else if(strncmp(commands[0], "CLI", 3) == 0){
 
 		printf("Inside CLI\n");
+		printf("commands[2] = |%s|\n", commands[2]);
 		if((strncmp(commands[1], "add", 3) == 0)){
+			printf("2-Inside CLI\n");
 	
 			if(is_in_list(single_clients, commands[2])){
 
@@ -136,7 +139,7 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 				int fd = get_client_fd(single_clients, aux_ip);
 				printf("suscribi P%s con ip[%s] y fd[%d]\n",commands[4], commands[2],fd);
 
-				
+								
 				suscribe_client(commands[4], commands[2],
 						 ((int)strtol(commands[3],(char **)NULL, 10)), fd);
 
@@ -146,6 +149,7 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 			}
 		}
 		else if((strncmp(commands[1], "delete", 6) == 0)){
+			printf("3-Inside CLI\n");
 			if(is_in_list(single_clients, commands[2])){
 				unsuscribe_client(commands[4], commands[2]);
 			}
@@ -154,10 +158,12 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 			}
 		}
 		else if((strncmp(commands[1], "log", 3) == 0)){
-			//commands[2] fd to send
+			printf("log\n");
+			printf("dsfdfdsf\n");
 			compress_file();
 
 		}
+		printf("3-Inside CLI\n");
 
 	}
 
@@ -172,9 +178,11 @@ void message_interpreter(char buffer[TAM], int clisockfd){
  * @param clisockfd 
  */
 void suscribe_client(char *producer, char* ip, int port, int clisockfd){
+	
+	printf("---------------------------------------------\n");
+	printf("Suscribing client %s into %s list\n", ip, producer);
 
 	if(strncmp(producer, "P1", 2) == 0){
-		printf("I suscribed %s into P1 list\n", ip);
 		push(&p1, ip, port, clisockfd);
 		print_clients_list(p1);
 	}
@@ -199,7 +207,7 @@ void unsuscribe_client(char *producer, char* ip){
 	else if(strncmp(producer, "P3", 2) == 0){
 		delete_node(&p3, ip);
 	}
-	printf("client erased from %s list\n", producer);
+	printf("client %s erased from %s list\n", ip, producer);
 }
 
 /**
@@ -214,7 +222,6 @@ char** parse_string(char* line){
     char **arr = NULL;
     size_t i = 0;
 
-    printf("In parse string: %s|\n", line);
     token = strtok(line, " ");
     arr   = (char**) malloc(sizeof(char*));
 
@@ -233,8 +240,13 @@ char** parse_string(char* line){
     arr[i-1][strlen(arr[i-1])-1]= '\0';
     free(token);
 
+	
+     printf("CLI log outside parse array\n");
+
+	for(size_t x=0; x<i; x++){
+		printf("arr[%ld]=%s   ",x,arr[x]);
+	}
 	printf("\n");
-     
     return arr;
 }
 
@@ -316,16 +328,9 @@ void send_in_list(struct Node* p, char msg[300], int producer){
 
     while(p != NULL){
 		if(is_in_disclist(disc_clients, p->ip)){
+
 			add_disc_buff(disc_clients, msg);
-
-		/*****WORKING******/
-
-		printf("sending for disc client buffer\n");
-		print_disc_buffer(disc_clients);
-
-
-
-
+			print_disc_buffer(disc_clients);
 
 		}
 		else{
@@ -335,7 +340,6 @@ void send_in_list(struct Node* p, char msg[300], int producer){
 				exit(EXIT_FAILURE);
 			}
 			send_to_log(p->ip, msg, producer);
-			printf("Le escribi a p%d->ip = %s fd = %d\n",producer,p->ip, p->cli_sock_fd);
 		}
 
         p = p->next;
@@ -443,15 +447,16 @@ void get_md5hash(char *str, unsigned char digest[MD5_DIGEST_LENGTH]) {
  */
 void compress_file(){
 
+	printf("Inside comrpess file\n");
 	char* buffer = NULL;
 	long int buf_size = 0;
 	zip_source_t* zs;
 	zip_t* z;
 	int err;
-
+	printf("Inside comrpess file\n");
 	fclose(file);
 	
-
+	printf("Inside comrpess file\n");
 	if ((file = fopen("log.txt", "r")) == NULL) {
         
         perror("Can't open log.txt to read");
@@ -487,6 +492,7 @@ void compress_file(){
         perror("Can't open log.txt to append");
         exit(EXIT_FAILURE);
     }
+	printf("2- Inside comrpess file\n");
 	
 	free(buffer);
 
