@@ -58,20 +58,30 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 		if(is_in_disclist(disc_clients, commands[1])){
 
 			long int disc_time = get_start_time(disc_clients, commands[1]);
+			printf("tiempo de espera = %ld\n",(time(NULL) - disc_time));
 			if((time(NULL) - disc_time) < MAX_WAIT ){
 				printf("\nENVIO BUFFER A CLIENTE\n");
+				push(&single_clients, commands[1],
+					((int)strtol(commands[2],(char **)NULL, 10)), clisockfd);
+				
+					
+				/*************WOOOOOOOORKING************/
+
+				//ESCRIBIR TODO EL BUFFER		
 			}
 			else{
-				// if (close(clisockfd) < 0) //el cliente llego despues de 5s, se desconecta
-         		// 	perror("close");
+				if (close(clisockfd) < 0) //el cliente llego despues de 5s, se desconecta
+         			perror("close");
 				printf("Me cerre :(\n");
 				unsuscribe_client("P1", commands[1]);
 				unsuscribe_client("P2", commands[1]);
 				unsuscribe_client("P3", commands[1]);
 				
-				delete_Node_d(&disc_clients, commands[1]);
+				
+				printf("Fuera de delete node\n");
 			}
 
+			delete_Node_d(&disc_clients, commands[1]);
 			/****************WORKING**************/
 		}
 		else if(!is_in_list(single_clients, commands[1])){
@@ -82,9 +92,9 @@ void message_interpreter(char buffer[TAM], int clisockfd){
 			printf("...SINGLE LIST....\n");
 			print_clients_list(single_clients);
 		}
-		// else{
-		// 	printf("There's already a client with that IP. Please try with other.\n");
-		// } 
+		else{
+			printf("There's already a client with that IP. Please try with other.\n");
+		} 
 		
     }
 	else if(strncmp(commands[0], "CLI", 3) == 0){
@@ -174,7 +184,8 @@ char** parse_string(char* line){
     char *token;
     char **arr = NULL;
     size_t i = 0;
-    
+
+    printf("In parse string: %s|\n", line);
     token = strtok(line, " ");
     arr   = (char**) malloc(sizeof(char*));
 
@@ -279,6 +290,7 @@ void send_in_list(struct Node* p, char msg[TAM], int producer){
 			add_disc_buff(disc_clients, msg);
 
 		/*****WORKING******/
+			printf("sending for disc client buffer\n");
 			print_disc_buffer(disc_clients);
 
 
@@ -316,9 +328,17 @@ void send_to_log(char* cli_ip, char msg[TAM], int producer){
 	static int max_lines = 0;
 
 	if(max_lines < 1000){
-		fprintf(file, "%s from: P%d to: %s | msg: %s\n"
-					,time_stamp(), producer, cli_ip, msg);  
+		if(producer > 0){
 
+			fprintf(file, "%s\tfrom: P%d to: %s | msg: %s\n"
+					,time_stamp(), producer, cli_ip, msg); 
+		}
+		else{
+			printf("Escribi en el log una desconexion\n");
+			fprintf(file, "%s\tclient %s disconnected\n"
+					,time_stamp(), cli_ip); 
+		}
+		 
 		max_lines++;
 	}
 	else{

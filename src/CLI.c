@@ -1,15 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> 
 #include <unistd.h>
+#include <arpa/inet.h>
 
 #define INPUT_SIZE 512
 #define TAM 256
+#define h_addr h_addr_list[0] 
 
 void display_name();
 int validate_input(char* input);
@@ -24,17 +25,19 @@ int main(int argc, char *argv[]){
     ssize_t n_read, n_write;
     int sockfd;
 
-    if (argc < 3){
+    if (argc != 3){
 		fprintf(stderr, "You should enter: %s <server-ip> <port>\n", argv[0]);
 		exit(0);
 	}
 
     sockfd = config_socket(argv);
+    print_prompt();
 
     while(1){
 
         display_name();
         fgets(input, INPUT_SIZE, stdin);
+        
     
         if(!validate_input(input)){
             printf("\nInvalid input\n");
@@ -49,19 +52,22 @@ int main(int argc, char *argv[]){
                 perror("Client: invalid read");
                 exit(EXIT_FAILURE);
             }
-            //formato de mensaje CLI <ommand> <client-ip> <client-port> <producer>
-            char to_send [TAM];
-            sprintf (to_send, "CLI %s", input);
-            printf("S: %s\n", to_send);
+            else if(n_read > 0){
+                //formato de mensaje CLI <ommand> <client-ip> <client-port> <producer>
+                char to_send [TAM];
+                sprintf (to_send, "CLI %s", input);
+                printf("S: %s\n", to_send);
 
-            n_write = write(sockfd, to_send, TAM);
-            if(n_write == -1){
-                perror("Client: invalid write.");
-                exit(EXIT_FAILURE);
+                n_write = write(sockfd, to_send, TAM);
+                if(n_write == -1){
+                    perror("Client: invalid write.");
+                    exit(EXIT_FAILURE);
+                }
             }
         }
     }
-    free(input);
+    //free(input);
+    return 0;
 }
 
 void display_name(){
@@ -72,6 +78,9 @@ void display_name(){
 }
 
 int validate_input(char* input){
+
+
+    //input[strcspn(input, "\n")] = '\0';
 
     char *copy = strdup(input);
     char *token = strtok(copy, " ");
@@ -115,8 +124,8 @@ int config_socket(char *argv[]){
 
 	puerto = (uint16_t)atoi(argv[2]);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	//server = gethostbyname(argv[1]);
-    server = gethostbyname("192.168.100.7");
+	printf("socket fd = %d\n", sockfd);
+    server = gethostbyname(argv[1]);
 
 	memset( (char *) &serv_addr, '0', sizeof(serv_addr) );
 	serv_addr.sin_family = AF_INET;

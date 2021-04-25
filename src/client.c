@@ -31,7 +31,7 @@ int main( int argc, char *argv[] ){
 	struct hostent *server;
 	char buffer[TAM];
 
-	if ( argc < 4 ) {
+	if ( argc != 4 ) {
 		fprintf( stderr, "You should enter: %s <my-ip> <server-ip> <port>\n", argv[0]);
 		exit( 0 );
 	}
@@ -74,7 +74,7 @@ int main( int argc, char *argv[] ){
 				sprintf (to_send, "ACK %s %s", argv[1], argv[3]);
 				printf("S: %s\n", to_send);
 
-				n_write = write(sockfd,to_send, TAM);
+				n_write = write(sockfd, to_send, TAM);
 
 				if(n_write == -1){
 					perror("Client: invalid write.");
@@ -85,7 +85,6 @@ int main( int argc, char *argv[] ){
 				printf("Error. Unrecognized hash\n");
 			}
 		}
-		
 	}
 	return 0;
 } 

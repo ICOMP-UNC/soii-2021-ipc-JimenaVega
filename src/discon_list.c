@@ -13,6 +13,7 @@ void free_array(char** arr){
 
 void print_disc_list(struct Node_d* node){
 
+    printf("DISCONNECTED LIST...\n");
     while (node != NULL) {
         printf("\nIP: %s\t", node->ip);
         printf("In Productores:\t");
@@ -52,6 +53,7 @@ int is_in_disclist(struct Node_d* node, char* ip){
 
 void delete_Node_d(struct Node_d** head_ref, char* ip){
 
+    printf("Dentro de delete node\n");
     struct Node_d *temp = *head_ref, *prev;
 
     if(!is_in_disclist(temp,ip)){
@@ -60,7 +62,9 @@ void delete_Node_d(struct Node_d** head_ref, char* ip){
     }
 
     if (temp != NULL && (strcmp(temp->ip, ip) == 0)){
-        free_array(temp->acum_msg);
+
+        if(temp->acum_msg != NULL)
+            free_array(temp->acum_msg);
         *head_ref = temp->next; 
         free(temp); 
         return;
@@ -71,7 +75,8 @@ void delete_Node_d(struct Node_d** head_ref, char* ip){
         temp = temp->next;
     }
 
-    free_array(temp->acum_msg);
+    if(temp->acum_msg != NULL)
+        free_array(temp->acum_msg);
 
     if (temp == NULL)
         return;
@@ -79,6 +84,7 @@ void delete_Node_d(struct Node_d** head_ref, char* ip){
     prev->next = temp->next;
  
     free(temp);
+    
 }
 
 long int get_start_time(struct Node_d* node, char* ip){
@@ -96,6 +102,7 @@ long int get_start_time(struct Node_d* node, char* ip){
 
 void push_disc_list(struct Node_d** head_ref, char* ip, int p[3]){
 
+    printf("pushee al cliente %s en la disc list\n", ip);
     struct Node_d* new_Node_d = (struct Node_d*)malloc(sizeof(struct Node_d));
 
     new_Node_d->ip = strdup(ip);
@@ -103,7 +110,7 @@ void push_disc_list(struct Node_d** head_ref, char* ip, int p[3]){
     for (int i = 0; i < 3; i++){
         new_Node_d->prod[i] = p[i];
     }
-
+    new_Node_d->acum_msg = NULL;
     new_Node_d->start_time = time(NULL);
     new_Node_d->next = (*head_ref);
     (*head_ref) = new_Node_d;

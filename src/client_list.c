@@ -24,6 +24,7 @@ void push(struct Node** head_ref, char* ip, int port, int cli_sock_fd){
    linked list */
 void delete_node(struct Node** head_ref, char* ip){
 
+    printf("ENTRE delete in single list \n");
     struct Node *temp = *head_ref, *prev;
 
     if(!is_in_list(temp,ip)){
@@ -48,6 +49,8 @@ void delete_node(struct Node** head_ref, char* ip){
     prev->next = temp->next;
  
     free(temp); 
+    
+    printf("SALI delete in single list \n");
 }
 
 int is_in_list(struct Node* node, char* key){
@@ -102,6 +105,7 @@ int get_client_fd(struct Node* node, char* ip){
 }
 
 char* get_ip(struct Node* node, int clifd){
+
 
     while(node != NULL){
 

@@ -95,21 +95,55 @@ int main( int argc, char *argv[] ) {
 				if(events_array[i].events & EPOLLIN){
 
 					ctrl_read = (int) read(events_array[i].data.fd, buffer, TAM);
+					printf("R: %s\n", buffer);
 
 					if(ctrl_read > 0){
 						printf("client [%d] : %s\n", events_array[i].data.fd, buffer);
+						message_interpreter(buffer, events_array[i].data.fd);
 						
 					}
-					else if(ctrl_read < 0){
-						perror("Error reading");
-						exit(EXIT_FAILURE);
-					}
+					else if(ctrl_read <= 0){
+						printf("Client [%d] disconnected\n",  events_array[i].data.fd);
+						int aux[3];
 
-					message_interpreter(buffer, events_array[i].data.fd);
+						char* cli_ip = get_ip(single_clients, events_array[i].data.fd);
+						if(cli_ip != NULL){
+							printf("1-pase\n");
+							aux[0] = is_in_list(p1, cli_ip);
+							aux[1] = is_in_list(p2, cli_ip);
+							aux[2] = is_in_list(p3, cli_ip);
+							printf("2-pase\n");
+
+							send_to_log(cli_ip, "", -1);
+
+							push_disc_list(&disc_clients, cli_ip, aux);
+							print_disc_list(disc_clients);
+							delete_node(&single_clients, cli_ip);
+						}
+						else{
+							printf("SOY LA CLI u un cliente con la IP repetida\n");
+						}
+
+					
+
+
+						free(cli_ip);
+					}
+					// else if(ctrl_read < 0){
+					// 	perror("Error reading");
+					// 	exit(EXIT_FAILURE);
+					// }
+
+					
+
+					bzero(buffer, TAM);
 				}
 				else if(events_array[i].events & EPOLLRDHUP){
+					/**************WORKING****************/
+
+					printf("client [%d] se desconecto EPOLLRDHUP\n", events_array[i].events);
 					
-					int aux[3];
+					/*int aux[3];
 					char* cli_ip = strdup(get_ip(single_clients, (int) events_array[i].events));
 					
 				 	aux[0] = is_in_list(p1, cli_ip);
@@ -121,12 +155,12 @@ int main( int argc, char *argv[] ) {
 					//erased from single clients list but not from the producers lists
 					delete_node(&single_clients, cli_ip);
 					
-					/**************WORKING****************/
+					
 
 					//2- add to log
 				
 
-					free(cli_ip);
+					free(cli_ip);*/
 				}
 			}
 		}

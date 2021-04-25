@@ -108,7 +108,7 @@ Para que la cola  System V se genere correctamente : </br>
 
 Luego para correr el servidor y la CLI vaya dentro de  */bin* y ejecute : 
 ```
-./serv <port>
+./serv <port> <server-ip>
 ./CLI <server-ip> <port>
 ```
 
