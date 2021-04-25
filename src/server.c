@@ -53,10 +53,6 @@ int main( int argc, char *argv[] ) {
 		for(int i = 0; i < ready_fds; i++){
 			if(events_array[i].data.fd == serv_sock_fd){
 
-				//REVISO SI LO TENIA EN LA LISTA DE SINGLE
-				//SI LO TENGO : BUSCO EL BUFFER ACUMULADO Y SE LO PASO COMO READ
-				//ELSE TODO NORMAL
-
 				client_sock = accept(serv_sock_fd,
 								  (struct sockaddr *) &cli_addr, 
 								   &clilen);

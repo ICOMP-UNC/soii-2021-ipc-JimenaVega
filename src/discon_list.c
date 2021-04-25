@@ -21,7 +21,6 @@ void print_disc_list(struct Node_d* node){
         for(int i = 0; i<3; i++){
             printf("%d ", node->prod[i]);
         }
-        //printf("\tstart time %ld\n", node->start_time);
         node = node->next;
     }
     printf("\n---------------\n");

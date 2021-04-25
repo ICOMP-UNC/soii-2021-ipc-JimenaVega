@@ -33,21 +33,24 @@ int main(int argc, char *argv[]){
     sockfd = config_socket(argv);
     print_prompt();
 
+    static int first_time = 1;
+
     while(1){
 
         display_name();
         fgets(input, INPUT_SIZE, stdin);
         
-    
+        printf("INPUT = |%s|\n", input);
         if(!validate_input(input)){
             printf("\nInvalid input\n");
             print_prompt();
         }
         else{
-            
-            n_read = read(sockfd, &buffer, TAM);
-            printf("R: %s\n", buffer);
-
+            if(first_time){
+                printf("Me bloquee esperando un read\n");
+                n_read = read(sockfd, &buffer, TAM);
+                printf("R: %s\n", buffer);
+            }
             if(n_read < 0){
                 perror("Client: invalid read");
                 exit(EXIT_FAILURE);
@@ -63,6 +66,11 @@ int main(int argc, char *argv[]){
                     perror("Client: invalid write.");
                     exit(EXIT_FAILURE);
                 }
+                n_read = 1;
+                first_time = 0;
+            }
+            else{
+                printf("Me meti donde read ==0\n");
             }
         }
     }
@@ -140,6 +148,9 @@ int config_socket(char *argv[]){
 		perror( "Client: connection error");
 		exit(1);
 	}
+    else{
+        printf("CLI conectada con exito \n");
+    }
 
     return sockfd;
 }

@@ -127,6 +127,7 @@ void message_interpreter(char buffer[TAM], int clisockfd){
     }
 	else if(strncmp(commands[0], "CLI", 3) == 0){
 
+		printf("Inside CLI\n");
 		if((strncmp(commands[1], "add", 3) == 0)){
 	
 			if(is_in_list(single_clients, commands[2])){
