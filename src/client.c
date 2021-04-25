@@ -58,7 +58,7 @@ int main( int argc, char *argv[] ){
 
 	while(1) {
 
-		n_read = read(sockfd, &buffer, TAM);
+		n_read = read(sockfd, &buffer,TAM);
 
 		if(n_read < 0){
 			perror("Client: invalid read");

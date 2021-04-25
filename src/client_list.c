@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #include "../inc/client_list.h" 
-#define TAM 256
+
 
 
 void push(struct Node** head_ref, char* ip, int port, int cli_sock_fd){

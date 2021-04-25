@@ -2,8 +2,6 @@
 #define _CLI_LIST_
 
 
-#define TAM 256
-
 struct Node {
     char* ip;
     int port;

@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS= -g -Wall -pedantic -Werror -Wextra -Wconversion -std=gnu11
 
-all: clean  bin/cli bin/serv bin/p1 bin/p2 bin/p3 bin/CLI bin/dummy
+all: clean bin/p1 bin/p2 bin/p3 bin/CLI bin/dummy bin/cli bin/serv
 
 bin/cli:
 	$(CC) $(CFLAGS) src/client.c -o bin/cli -lcrypto -lssl

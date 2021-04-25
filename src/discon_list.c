@@ -1,5 +1,6 @@
 #include "../inc/discon_list.h"
 
+#define TAM 256
 
 void free_array(char** arr){
 

@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TAM 256
 
 struct Node_d {
     char* ip;
@@ -22,7 +21,7 @@ extern int is_in_disclist(struct Node_d*, char*);
 extern void delete_Node_d(struct Node_d**, char*);
 extern long int get_start_time(struct Node_d*, char*);
 extern void push_disc_list(struct Node_d**, char*, int[3]);
-extern void add_disc_buff(struct Node_d* node, char msg[TAM]);
+extern void add_disc_buff(struct Node_d* node, char* msg);
 extern void print_disc_list(struct Node_d* node);
 extern void print_disc_buffer(struct Node_d* node);
 
