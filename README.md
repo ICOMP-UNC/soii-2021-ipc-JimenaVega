@@ -1,69 +1,165 @@
+
 TP1 Sistemas Operativos 2 
-### Ingeniería en Computación - FCEFyN - UNC
-# Interprocess Communication
+## Ingeniería en Computación - FCEFyN - UNC 2021
+---
 
-## Introducción
-Los mecanismos de IPC le permite a los procesos intercambiar información. Hemos visto que se pueden clasificar en dos grandes grupos, los de transferencia de datos (pipe, FIFO, message queue, sockets, etc.) y los de memoria compartida (shared memory, memory mapping, etc.). Todo este conjunto de mecanismos son sumamente útiles en todo proyecto y es lo que motiva el presente trabajo.
-
-## Objetivo
-El objetivo del presente trabajo práctico es que el estudiante sea capaz de diseñar e implementar un software que haga uso de los mecanismos de IPC que provee el Sistema Operativo, implementando lo visto en el teórico, práctico y haciendo uso todos los conocimientos adquiridos en Ingeniería de Software y Sistemas Operativos I.
-
-## Desarrollo
-Se pide que diseñe, implemente y testee un software (desarrollado en lenguaje C), siguiendo el diagrama de la Figura 1, la cual describe un sistema utilizando el patrón [Publisher Suscriber][publisher].
-
-![Diagrama de Componentes](/img/block_diagram.png)
-*Figura 1: Diagrama de Componentes del sistema*
-
-### Delivery Manager
-Se debe implementar un proceso que se encargue de recibir mensajes y enviarlos a todos los suscriptores validos. A este proceso, lo vamos a  vamos a llamar _DeliveryManager_. El mismo debe contemplar lo siguiente:
-
--   Debe poseer una interfaz (CLI) que acepte unicamente los siguientes comandos:
-    - `add <socket> <productor>` : Este comando agregara el socket a una lista correspondiente al servicio, para ser validado.
-    - `delete <socket> <productor>`: Este comando borra el host como suscriptor dejando de enviarle mensajes.
-    - `log <socket>`. Este comando comprime el log local del _DeliveryManager_ y lo envía a `<socket>`.
--	El _DeliveryManager_ debe validar que los hosts agregados sean aptos para recibir mensaje del tipo `<Mensaje>|<Checksum>`.	
--	Una vez validado el host, todos los mensajes que recibe el _DeliveryManager_ de un productor, deben ser enviados a los suscriptores correspondientes.
--	En caso que se desconecte un suscriptor, el servicio para los demás suscriptores no debe verse afectado. Luego de cinco segundos de mensajes fallados, debe ser eliminado de la lista. Si el suscriptor vuelve antes de esos 5 segundos, debe enviársele todos los mensajes en colados.
--	El _DeliveryManager_ debe loguear todos los mensajes enviados, tanto el origen como el destino, también se agrega o se elimina un suscriptor y cuando es validado. El formato del log debe `<datetime> <Mensaje>`. 
+</br>
+<p align="center">
 
 
-### Productores
-Se deben implementar tres productores:
-- Un productor que envía un mensaje random con una tasa de X/segundos.
-- Un productor que envía la memoria libre del Sistema, cada Y/segundos.
-- Un productor que debe enviar load del sistema normalizado, cada Z/segundos.
-Pueden elegir otro productor, justificándolo. X, Y y Z deben ser distintos.
+  <h3 align="center">Interprocess Communication</h3>
+
+  <p align="center">
+    Communication system using IPv4 sockets and System V queue.
+    <br>
+    <a href="https://reponame/issues/new?template=bug.md">Report bug</a>
+    ·
+    <a href="https://reponame/issues/new?template=feature.md&labels=feature">Request feature</a>
+  </p>
+</p>
+
+</br>
+
+---
 
 
-### Suscriptores
-- Puede existir hasta cinco mil suscriptores, y deben ser capaz de vivir en una misma instancia.
-- Los suscriptores deben esperar que el _DeliveryManager_ los suscriba mediante el comando `add`, es decir, que lo suscriba.
-- Los suscriptores deben validar el `checksum` de los mensajes recibidos y loguear el mensaje, para luego ser descartados.
+
+## Tabla de contenidos
+<!-- - [## Ingeniería en Computación - FCEFyN - UNC 2021](#-ingeniería-en-computación---fcefyn---unc-2021)
+- [Tabla de contenidos](#tabla-de-contenidos) -->
+- [Introduccion](#introduccion)
+- [Processes](#processes)
+- [Secuencias](#secuencias)
+- [Prerequisitos](#prerequisitos)
+- [Set up](#set-up)
+- [Que está incluido?](#Qué-esta-incluido?)
+- [Turn off](#turn-off)
+- [Referencias](#referencias)
+
+## Introduccion
+
+En este trabajo se verá la comunicación entre 3 productores que mandan cada una tasa determinada de segundos un mensaje hacia clientes suscriptos en una lista dentro del servidor.
 
 
-## Restricciones
-El diseño debe contemplar toda situación no descripta en el presente documento y se debe hacer un correcto manejo de errores. 
+## Processes
 
-## Criterios de Corrección
-- Se debe compilar el código con los flags de compilación: 
-     -Wall -Pedantic -Werror -Wextra -Wconversion -std=gnu11
-- La correcta gestion de memoria.
-- Dividir el código en módulos de manera juiciosa.
-- Estilo de código.
-- Manejo de errores
-- El código no debe contener errores, ni warnings.
-- El código no debe contener errores de cppcheck.
+-  Server o delivery manager
 
-## Entrega
-La entrega se hace a travéz del repositorio de GitHub y se deberá demostrar la realizacion del mismo mediante un correcto uso del [workflow de Git][workflow]. El repositorio deberá proveer los archivos fuente y cualquier otro archivo asociados a la compilación, archivos  de  proyecto  ”Makefile”  y  el  código correctamente documentado. No debe contener ningún archivo asociado a proyectos de un IDE y se debe asumir que el proyecto podrá ser compilado y corrido por una `tty` en una distribución de Linux con las herramientas típicas de desarrollo. También se deberá entregar un informe (que pude ser en MD en el repo) explicando paso a paso el desarrllo, inluyendo graficos del diseño solución propuesto, justificando en todo momento lo implementrado.
+El server utiliza socket INET con conexión para comunicarse con los clientes. Para poder aceptar a multiples clientes se utilizó la libreria epoll que nos permite detectar cambios de eventos en los clientes.
 
-## Evaluación
-El presente trabajo práctico es individual y deberá entregarse antes de las 23:50ART del día 22 de Abril de 2021 dejando asentado en el LEV con el archivo de ifnorme. Será corregido y luego se coordinará una fecha para la defensa oral del mismo.
+Mientras que para el otro lado de la comunicación se utiliza una System V queue de la cual el server solo lee los mensajes que los productores le envian.
 
-## Links / Referencias
-- [Patrón Publisher-Suscriber](https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern)
-- [Git Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows)
-- [The Linux Programming Interfaces: Chapter 43](https://github.com/rangaeeeee/books-raspberrypimagazines/blob/18bf13c133ef0a78b2b60c4ff8635ac71b0843f1/The%20Linux%20Programming%20Interface-Michael%20Kerrisk.pdf)
+- CLI
 
-[publisher]: https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern "Patrón Publisher-Suscriber"
-[workflow]: https://www.atlassian.com/git/tutorials/comparing-workflows "Git Workflow"
+Se planteo la terminal como si fuese un cliente más, esto es, se conecta con el servidor via socket. Utiliza una trama de comunicación con un checksum para validar.
+
+
+- Productores
+
+Los productores utilizan una cola generada por un archivo comun con el servidor que se pide como requisito mas adelante en este informe.
+
+Su funcion es simplemente generar mensajes cada una tasa determinada de segundos.
+
+- Clientes
+
+Como se dijo anteriormente, estos se comunican con el server via socket. Para poder hacerlo se utiliza la trama de comunicacion definida en la siguiente imagen:
+
+
+
+![Frames](/img/frames-SO2-TP1.png)
+
+
+## Secuencias
+
+1. Primer interaccion entre client y server
+
+![Frames](/img/client_serv_1.png)
+1. Interacciones entre CLI y server
+
+![Frames](/img/CLI_serv.png)
+
+1.  Comunicacion regular entre productores, server y clients.
+
+![Frames](/img/cli-serv-pro.png)
+
+
+
+## Prerequisitos
+
+
+- Linux operating system
+- Python 3
+- Openssl should be installed 
+  
+  ```sudo apt-get install libssl-dev```
+- Makefile
+- Libzip. Para instalar referirse [here](#https://libzip.org/documentation/)
+
+## Set up 
+
+Primero crear las carpetas  *bin* con ```mkdir bin``` y *obj* con ```mkdir obj```
+
+Este programa se compila usando```make``` dentro del repositorio.
+
+Para que la cola  System V se genere correctamente : </br>
+ ```
+ touch /tmp/mqueue_server_key
+ ```
+
+Luego para correr el servidor y la CLI vaya dentro de  */bin* y ejecute : 
+```
+./serv <port> <server-ip>
+./CLI <server-ip> <port>
+```
+
+Para los clients y producers vaya dentro de */src* :
+```
+python3 clients.py
+python3 producers.py
+```
+
+
+## Qué esta incluido?
+
+
+
+```text
+
+├── bin
+├── img
+├── inc
+│    ├── libserv.h
+│    ├── lib_glob_struct.h
+│    ├── global_var.h
+│    └── cient_list.h
+├── obj
+├── src
+│    ├── clean.py
+│    ├── CLI.c
+│    ├── client.c
+│    ├── client_list.c
+│    ├── clients.py
+│    ├── libserv.c
+│    ├── producer_1.c
+│    ├── producer_2.c
+│    ├── producer_3.c
+│    ├── producers.py
+│    └── server.c
+├── Makefile
+└── README.md
+```
+
+## Turn off
+
+Terminar todos los procesos
+
+```
+python3 clean.py
+```
+
+
+## Referencias
+
+- man epoll(7) : codigo de ejemplo
+- msg queue : [https://www.softprayog.in/programming/interprocess-communication-using-system-v-message-queues-in-linux]
+- lists : [https://www.geeksforgeeks.org/linked-list-set-3-deleting-node]
