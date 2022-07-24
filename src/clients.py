@@ -2,11 +2,13 @@ import os
 import random
 
 
-port = input("Server port: ")
-serverIP =input("Server IP: ")
+# port = input("Server port: ")
+# serverIP = input("Server IP: ")
+port = 2021
+serverIP = "192.168.100.6"
 cli  = int(input("Amount of clients: "))
 
-
+print("---------------------------------------\n")
 # "192.168.100.7"
 
 for i in range (cli):

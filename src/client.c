@@ -16,7 +16,7 @@
 int translate_hash(char buffer[TAM]);
 char* get_hash(char* msg);
 void compute_md5(char *str, unsigned char digest[MD5_DIGEST_LENGTH]);
-
+long int get_zip_size(char buffer[TAM]);
 //argv[1] = <my-ip>
 //argv[2] = <server-ip>
 //argv[3] = <port>
@@ -59,35 +59,82 @@ int main( int argc, char *argv[] ){
 	while(1) {
 
 		n_read = read(sockfd, &buffer,TAM);
+		printf("my socket = %d\n", sockfd);
+		printf("N_READ = %ld\n", n_read);
+		printf("\033[32mBUFFER = %s\033[0m\n", buffer);
+		
+		if(n_read > 0){
+			if(strncmp(buffer, "B", 1) == 0){
+				ssize_t readBytes;
 
-		if(n_read < 0){
+				long int zip_size = get_zip_size(buffer);
+				
+				FILE *file = fopen("client_log.zip", "wb");
+				if (file == NULL){
+					printf("Error openening client_log.zip\n");
+				}
+
+				char* binbuffer = calloc((size_t)zip_size, 1);
+
+				// Lectura del zip enviado por el server
+				readBytes = read(sockfd, binbuffer, (size_t)zip_size);
+				if(readBytes < 0){
+					printf("Error reading socket.\n");
+				}
+
+				printf("ReadBytes = %ld\n", readBytes);
+
+				// Se guarda lo recibido dentro del archivo zip
+				fwrite(binbuffer, 1, (size_t)zip_size, file);
+				
+				int close = fclose(file);
+				if(close != 0){
+					printf("Error closing zip file.\n");
+				}
+			}
+			else {
+				// Mensaje normal
+				printf("R: %s\n", buffer);
+
+				if(translate_hash(buffer)){
+					//formato = ACK <my-ip> <port>
+					char to_send [TAM];
+					sprintf (to_send, "ACK %s %s", argv[1], argv[3]);
+					printf("S: %s\n", to_send);
+					printf("client\n");
+
+					n_write = write(sockfd, to_send, TAM);
+
+					if(n_write == -1){
+						perror("Client: invalid write.");
+						exit(EXIT_FAILURE);
+					}
+				}
+				else{
+					printf("Error. Unrecognized hash\n");
+				}
+			}
+		}
+		else{
 			perror("Client: invalid read");
 			exit(EXIT_FAILURE);
 		}
-		else if(n_read > 0){
-			
-			printf("R: %s\n", buffer);
-
-			if(translate_hash(buffer)){
-				//formato = ACK <my-ip> <port>
-				char to_send [TAM];
-				sprintf (to_send, "ACK %s %s", argv[1], argv[3]);
-				printf("S: %s\n", to_send);
-
-				n_write = write(sockfd, to_send, TAM);
-
-				if(n_write == -1){
-					perror("Client: invalid write.");
-					exit(EXIT_FAILURE);
-				}
-			}
-			else{
-				printf("Error. Unrecognized hash\n");
-			}
-		}
+		
+		sleep(2);
 	}
 	return 0;
 } 
+
+long int get_zip_size(char buffer[TAM]){
+	char *remaining;
+	char* token = strtok(buffer, " ");
+    token = strtok(NULL, " ");
+	
+	long int size = strtol(token, &remaining, 10);
+	printf("SIZE = %ld\n", size);
+
+	return size;
+}	
 
 int translate_hash(char buffer[TAM]){
 

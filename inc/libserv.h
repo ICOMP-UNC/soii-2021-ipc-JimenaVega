@@ -7,7 +7,6 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
@@ -17,6 +16,11 @@
 #include <time.h>
 #include <signal.h>
 #include <zip.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/sendfile.h>
+
+
 
 
 #include "../inc/client_list.h"

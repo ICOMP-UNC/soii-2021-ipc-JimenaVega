@@ -101,6 +101,7 @@ int main( int argc, char *argv[] ) {
 			else{
 				if(events_array[i].events & EPOLLIN){
 
+					//prints clients ACK messages
 					ctrl_read = (int) read(events_array[i].data.fd, buffer, TAM);
 					printf("R: %s\n", buffer);
 
